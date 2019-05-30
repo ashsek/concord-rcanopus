@@ -66,9 +66,6 @@
 // simpleTest includes
 #include "commonDefs.h"
 
-// Couchdb includes
-#include "couchdbxx.hpp"
-
 #ifdef USE_LOG4CPP
 #include <log4cplus/configurator.h>
 #endif
@@ -239,16 +236,6 @@ class SimpleAppState : public RequestsHandler {
       auto lastValue = get_last_state_value(clientId);
       *pRet = lastValue;
       outActualReplySize = sizeof(uint64_t);
-
-      //---- stuff for  couchdb -----------
-      // std::cout << "----- Create DB 'test' -----" << std::endl;
-      // std::cout << o.json() << std::endl;
-      // body << "title" << request;
-      // body << "timestamp" << static_cast<std::ostringstream*>( &(std::ostringstream() << time(NULL)))->str();
-      // o = couch.put("test3", body);
-    // std::cout << "----- Insert new doc -----" << std::endl;
-    // std::cout << o.json() << std::endl; 
-
     } else {
       // Our read-write request includes one eight-byte argument, in addition to
       // the request type.
@@ -276,17 +263,6 @@ class SimpleAppState : public RequestsHandler {
       outActualReplySize = sizeof(uint64_t);
 
       st->markUpdate(statePtr, sizeof(State) * numOfClients);
-      wezside::CouchDBXX couch;
-
-      jsonxx::Object body;
-      jsonxx::Object o = couch.put("test3");
-      std::cout << "----- Create DB 'test' -----" << std::endl;
-      std::cout << o.json() << std::endl;
-      body << "title" << *pReqVal;
-      body << "state num" << stateNum;
-      body << "clientId" << clientId;
-      body << "timestamp" << static_cast<std::ostringstream*>( &(std::ostringstream() << time(NULL)))->str();
-      o = couch.put("test3", body);
     }
 
     return 0;

@@ -6,6 +6,10 @@ set(simpleTest_client_source_files
 )
 
 set(simpleTest_replica_source_files
+    jsonxx.h
+    jsonxx.cc
+    curlrequest.hpp
+    couchdbxx.hpp
     replica.cpp
     ${CONFIG_FOLDER_PATH_VALUE}/test_comm_config.cpp
     ${CONFIG_FOLDER_PATH_VALUE}/config_file_parser.cpp
@@ -52,6 +56,7 @@ set_target_properties(configTest PROPERTIES OUTPUT_NAME config)
 
 target_link_libraries(simpleTest_client PUBLIC corebft)
 target_link_libraries(simpleTest_server PUBLIC corebft)
+target_link_libraries(simpleTest_server PUBLIC -lcurl)
 target_link_libraries(configTest PUBLIC corebft)
 
 target_include_directories(simpleTest_client
