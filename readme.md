@@ -1,4 +1,4 @@
-##Starting up
+#Starting up
 
 Currently the code is really dirty and I have made some changes in the cmake files. So in order to run everything perfectly its better not to execute cmake again. 
 You should have couchdb previously installed and some dependencies which concord mentions (see the README_original.md). Perform all the steps except building the concord.
