@@ -20,11 +20,11 @@ int main(int argc, char **argv) {
   const string use_default_config_file = "d";
   const uint expected_replicas_num = 4;
   const uint expected_clients_num = 1;
-  const string expected_replica1 = "127.0.0.1:3410";
-  const string expected_replica2 = "127.0.0.1:3420";
-  const string expected_replica3 = "127.0.0.1:3430";
-  const string expected_replica4 = "127.0.0.1:3440";
-  const string expected_client   = "127.0.0.1:4444";
+  const string expected_replica1 = "10.0.2.5:3710";
+  const string expected_replica2 = "10.0.2.6:3712";
+  const string expected_replica3 = "10.0.2.7:3714";
+  const string expected_replica4 = "10.0.2.8:3716";
+  const string expected_client   = "10.0.2.8:4444";
   const string values_to_split = "10.23.43.1:1234:1238";
   const string expected_split_values[] = { "10.23.43.1", "1234", "1238" };
   const string values_to_split_delimiter = ":";
