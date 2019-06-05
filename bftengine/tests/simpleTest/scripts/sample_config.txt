@@ -1,8 +1,8 @@
 # Sample configuration file for creation of a testing environment.
 replicas_config:
- - 127.0.0.1:3410
- - 127.0.0.1:3420
- - 127.0.0.1:3430
- - 127.0.0.1:3440
+ - 10.0.2.5:3410
+ - 10.0.2.6:3420
+ - 10.0.2.7:3430
+ - 10.0.2.8:3440
 
-clients_config: 127.0.0.1:4444
+clients_config: 10.0.2.8:4444
