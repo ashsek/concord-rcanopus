@@ -1,4 +1,7 @@
 #!/bin/sh
+echo "--- Deleting database named global_membership_service ---"
+
+curl -X DELETE http://127.0.0.1:5984/global_membership_service
 
 echo "--- Creating database named global_membership_service ---"
 
