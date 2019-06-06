@@ -276,17 +276,19 @@ class SimpleAppState : public RequestsHandler {
       outActualReplySize = sizeof(uint64_t);
 
       st->markUpdate(statePtr, sizeof(State) * numOfClients);
+      
       wezside::CouchDBXX couch;
 
       jsonxx::Object body;
-      jsonxx::Object o = couch.put("test3");
-      std::cout << "----- Create DB 'test' -----" << std::endl;
+      jsonxx::Object o = couch.doc("global_membership_service","quorum_size");
+      //std::cout << "----- Create DB 'test' -----" << std::endl;
       std::cout << o.json() << std::endl;
-      body << "title" << *pReqVal;
-      body << "state num" << stateNum;
-      body << "clientId" << clientId;
-      body << "timestamp" << static_cast<std::ostringstream*>( &(std::ostringstream() << time(NULL)))->str();
-      o = couch.put("test3", body);
+      body << "_id" << "quorum_size";
+      body << "_rev" << o.get<string>("_rev");
+      body << "10.0.2.5" << stateNum;
+      // body << "timestamp" << static_cast<std::ostringstream*>( &(std::ostringstream() << time(NULL)))->str();
+      o = couch.put("global_membership_service", body);
+      std::cout << o.json() << std::endl;
     }
 
     return 0;
