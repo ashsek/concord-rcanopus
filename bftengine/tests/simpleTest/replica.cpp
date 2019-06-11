@@ -214,12 +214,30 @@ class SimpleAppState : public RequestsHandler {
     numOfClients{numCl},
     numOfReplicas{numRep} {}
 
+  string parse_char_string(const char * request, uint32_t requestSize){
+
+      std::string request_string = "";
+
+      const char* pReqId = request;
+
+      for (uint32_t i = 0; i < requestSize; ++i)
+      {
+          std::string char_request(1, *pReqId); //conerting requests from char * back to string.
+          request_string +=  char_request;
+          pReqId++;
+      }
+
+      return request_string;
+  }
+
+
   // Handler for the upcall from Concord-BFT.
   int execute(uint16_t clientId,
               uint64_t sequenceNum,
               bool readOnly,
               uint32_t requestSize,
               const char* request,
+
               uint32_t maxReplySize,
               char* outReply,
               uint32_t& outActualReplySize) override {
@@ -233,12 +251,12 @@ class SimpleAppState : public RequestsHandler {
           "request is NOT " << READ_VAL_REQ);
 
       // Copy the latest register value to the reply buffer.
-      test_assert(maxReplySize >= sizeof(uint64_t),
-          "maxReplySize < " << sizeof(uint64_t));
-      uint64_t* pRet = reinterpret_cast<uint64_t*>(outReply);
-      auto lastValue = get_last_state_value(clientId);
-      *pRet = lastValue;
-      outActualReplySize = sizeof(uint64_t);
+      // test_assert(maxReplySize >= sizeof(uint64_t),
+          // "maxReplySize < " << sizeof(uint64_t));
+      // char* pRet = reinterpret_cast<char*>(outReply);
+      // auto lastValue = get_last_state_value(clientId);
+      // *pRet = "Yolo";
+      // outActualReplySize = sizeof(char);
 
       //---- stuff for  couchdb -----------
       // std::cout << "----- Create DB 'test' -----" << std::endl;
@@ -252,43 +270,46 @@ class SimpleAppState : public RequestsHandler {
     } else {
       // Our read-write request includes one eight-byte argument, in addition to
       // the request type.
-      test_assert(requestSize == 2 * sizeof(uint64_t),
-          "requestSize != " << 2 * sizeof(uint64_t));
+      // test_assert(requestSize == 3 * sizeof(uint64_t),
+          // "requestSize != " << 3 * sizeof(uint64_t));
 
-      // We only support the WRITE operation in read-write mode.
-      const uint64_t* pReqId = reinterpret_cast<const uint64_t*>(request);
-      test_assert(*pReqId == SET_VAL_REQ, "*preqId != " << SET_VAL_REQ);
+      std::string request_string = parse_char_string(request, requestSize); // Casting char * to string.
 
-      // The value to write is the second eight bytes of the request.
-      const uint64_t* pReqVal = (pReqId + 1);
+      jsonxx::Object p;
+      p.parse(request_string); // Converting our string to json;
 
       // Modify the register state.
-      set_last_state_value(clientId, *pReqVal);
+      // set_last_state_value(clientId, *pReqVal);
       // Count the number of times we've modified it.
       auto stateNum = get_last_state_num(clientId);
-      set_last_state_num(clientId, stateNum + 1);
+      // set_last_state_num(clientId, stateNum + 1);
 
       // Reply with the number of times we've modified the register.
-      test_assert(maxReplySize >= sizeof(uint64_t),
-          "maxReplySize < " << sizeof(uint64_t));
+      // test_assert(maxReplySize >= sizeof(uint64_t),
+          // "maxReplySize < " << sizeof(uint64_t));
       uint64_t* pRet = reinterpret_cast<uint64_t*>(outReply);
       *pRet = stateNum;
       outActualReplySize = sizeof(uint64_t);
 
       st->markUpdate(statePtr, sizeof(State) * numOfClients);
       
-      wezside::CouchDBXX couch;
 
-      jsonxx::Object body;
-      jsonxx::Object o = couch.doc("global_membership_service","quorum_size");
-      //std::cout << "----- Create DB 'test' -----" << std::endl;
-      std::cout << o.json() << std::endl;
-      body << "_id" << "quorum_size";
-      body << "_rev" << o.get<string>("_rev");
-      body << "10.0.2.5" << stateNum;
-      // body << "timestamp" << static_cast<std::ostringstream*>( &(std::ostringstream() << time(NULL)))->str();
-      o = couch.put("global_membership_service", body);
-      std::cout << o.json() << std::endl;
+      //Different cases for different API.
+      if(p.get<jsonxx::String>("Mode") == "Quorum_Size"){
+          wezside::CouchDBXX couch;
+
+          jsonxx::Object body;
+          jsonxx::Object o = couch.doc("global_membership_service","quorum_size");
+          //std::cout << "----- Create DB 'test' -----" << std::endl;
+          std::cout << o.json() << std::endl;
+          body << "_id" << "quorum_size";
+          body << "_rev" << o.get<string>("_rev");
+          body << "10.0.2.9" << p.get<jsonxx::Array>("ip");
+          // body << "mode" << ;
+          // body << "timestamp" << static_cast<std::ostringstream*>( &(std::ostringstream() << time(NULL)))->str();
+          o = couch.put("global_membership_service", body);
+          std::cout << o.json() << std::endl;
+      }
     }
 
     return 0;

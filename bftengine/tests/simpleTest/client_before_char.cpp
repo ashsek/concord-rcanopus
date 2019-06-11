@@ -301,16 +301,16 @@ int main(int argc, char **argv) {
        // printf("\n---------------------------------------------------------------\n");
 
 
-      // test_assert(actualReplyLength == sizeof(uint64_t),
-          // "actualReplyLength != " << sizeof(uint64_t));
+      test_assert(actualReplyLength == sizeof(uint64_t),
+          "actualReplyLength != " << sizeof(uint64_t));
 
       LOG_INFO(clientLogger, "Ashwin_Sekhari_read" << *reinterpret_cast<uint64_t*>(replyBuffer));
 
       // Only assert the last expected value if we have previous set a value.
-      // if (hasExpectedLastValue)
-        // test_assert(
-            // *reinterpret_cast<uint64_t*>(replyBuffer) == expectedLastValue,
-            // "*reinterpret_cast<uint64_t*>(replyBuffer)!=" << expectedLastValue);
+      if (hasExpectedLastValue)
+        test_assert(
+            *reinterpret_cast<uint64_t*>(replyBuffer) == expectedLastValue,
+            "*reinterpret_cast<uint64_t*>(replyBuffer)!=" << expectedLastValue);
     } else {
       // Send a write, if we're not doing a read.
 
@@ -321,22 +321,15 @@ int main(int argc, char **argv) {
       // Prepare request parameters.
       const bool readOnly = false;
 
-      
-      std::string test = "{ \"Mode\": \"Quorum_Size\", \"ip\": [\"8.8.8.8\", \"8.8.8.9\", \"8.8.9.8\"]}"; // Request to send.
+      const uint32_t kRequestLength = 3;
 
-      //Converting request string to char array;
-      const uint32_t kRequestLength = test.length();
-      char requestBuffer[kRequestLength];
+      const uint64_t requestBuffer[kRequestLength] =
+          {SET_VAL_REQ, expectedLastValue, mode};
       
-      for (uint32_t i = 0; i < test.length(); ++i)
-      {
-          requestBuffer[i] = (char) test[i];    // Converting string to char
-      }
-
       const char* rawRequestBuffer =
           reinterpret_cast<const char*>(requestBuffer);
       
-      const uint32_t rawRequestLength = kRequestLength;
+      const uint32_t rawRequestLength = sizeof(uint64_t) * kRequestLength;
 
       const uint64_t requestSequenceNumber =
           pSeqGen->generateUniqueSequenceNumberForRequest();
@@ -363,12 +356,12 @@ int main(int argc, char **argv) {
 
       // printf("\n---------------------------------------------------------------\n");
 
-      // test_assert(actualReplyLength == sizeof(uint64_t),
-          // "actualReplyLength != " << sizeof(uint64_t));
+      test_assert(actualReplyLength == sizeof(uint64_t),
+          "actualReplyLength != " << sizeof(uint64_t));
 
-      char* retVal = reinterpret_cast<char*>(replyBuffer);
+      uint64_t retVal = *reinterpret_cast<uint64_t*>(replyBuffer);
 
-      // LOG_INFO(clientLogger, "Ashwin_Sekhari_write" << *retVal << *(retVal+1) << *(retVal+2);
+      LOG_INFO(clientLogger, "Ashwin_Sekhari_write" << retVal);
 
       // We don't know what state number to expect from the first request. The
       // replicas might still be up from a previous run of this test.
@@ -376,11 +369,11 @@ int main(int argc, char **argv) {
         // If we had done a previous write, then this write should return the
         // state number right after the state number that that write returned.
         expectedStateNum++;
-        // test_assert(retVal == expectedStateNum,
-            // "retVal != " << expectedLastValue);
+        test_assert(retVal == expectedStateNum,
+            "retVal != " << expectedLastValue);
       } else {
         hasExpectedStateNum = true;
-        // expectedStateNum = retVal;
+        expectedStateNum = retVal;
       }
     }
   }

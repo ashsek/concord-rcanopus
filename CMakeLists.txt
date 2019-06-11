@@ -20,14 +20,14 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(IS_LEAKCHECK FALSE)
 set(SLEEP_FOR_DBG FALSE)
 
-# Default to debug builds
+# Default to debug 
 # Release builds can be enabled by running cmake with -DCMAKE_BUILD_TYPE=Release
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Enable debug or release builds" FORCE)
 endif()
 
 # Default USE_LOG4CPP to FALSE
-option(USE_LOG4CPP "Enable LOG4CPP" FALSE)
+option(USE_LOG4CPP "Enable LOG4CPP" TRUE)
 
 # Default BUILD_COMM_TCP_PLAIN to FALSE
 option(BUILD_COMM_TCP_PLAIN "Enable TCP communication" FALSE)

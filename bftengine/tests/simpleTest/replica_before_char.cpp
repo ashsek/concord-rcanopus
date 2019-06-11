@@ -66,6 +66,9 @@
 // simpleTest includes
 #include "commonDefs.h"
 
+// Couchdb includes
+#include "couchdbxx.hpp"
+
 #ifdef USE_LOG4CPP
 #include <log4cplus/configurator.h>
 #endif
@@ -236,11 +239,21 @@ class SimpleAppState : public RequestsHandler {
       auto lastValue = get_last_state_value(clientId);
       *pRet = lastValue;
       outActualReplySize = sizeof(uint64_t);
+
+      //---- stuff for  couchdb -----------
+      // std::cout << "----- Create DB 'test' -----" << std::endl;
+      // std::cout << o.json() << std::endl;
+      // body << "title" << request;
+      // body << "timestamp" << static_cast<std::ostringstream*>( &(std::ostringstream() << time(NULL)))->str();
+      // o = couch.put("test3", body);
+    // std::cout << "----- Insert new doc -----" << std::endl;
+    // std::cout << o.json() << std::endl; 
+
     } else {
       // Our read-write request includes one eight-byte argument, in addition to
       // the request type.
-      test_assert(requestSize == 2 * sizeof(uint64_t),
-          "requestSize != " << 2 * sizeof(uint64_t));
+      test_assert(requestSize == 3 * sizeof(uint64_t),
+          "requestSize != " << 3 * sizeof(uint64_t));
 
       // We only support the WRITE operation in read-write mode.
       const uint64_t* pReqId = reinterpret_cast<const uint64_t*>(request);
@@ -248,6 +261,8 @@ class SimpleAppState : public RequestsHandler {
 
       // The value to write is the second eight bytes of the request.
       const uint64_t* pReqVal = (pReqId + 1);
+
+      const uint64_t* mo = (pReqId +2); // Mode is the 3 eight bites of the request.
 
       // Modify the register state.
       set_last_state_value(clientId, *pReqVal);
@@ -263,6 +278,20 @@ class SimpleAppState : public RequestsHandler {
       outActualReplySize = sizeof(uint64_t);
 
       st->markUpdate(statePtr, sizeof(State) * numOfClients);
+      
+      wezside::CouchDBXX couch;
+
+      jsonxx::Object body;
+      jsonxx::Object o = couch.doc("global_membership_service","quorum_size");
+      //std::cout << "----- Create DB 'test' -----" << std::endl;
+      std::cout << o.json() << std::endl;
+      body << "_id" << "quorum_size";
+      body << "_rev" << o.get<string>("_rev");
+      body << "10.0.2.5" << stateNum;
+      body << "mode" << *mo;
+      // body << "timestamp" << static_cast<std::ostringstream*>( &(std::ostringstream() << time(NULL)))->str();
+      o = couch.put("global_membership_service", body);
+      std::cout << o.json() << std::endl;
     }
 
     return 0;
