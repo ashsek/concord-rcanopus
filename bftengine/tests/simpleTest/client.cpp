@@ -46,6 +46,23 @@
 #include <log4cplus/configurator.h>
 #endif
 
+//grpc includes
+#include <memory>
+#include <string>
+
+#include <grpcpp/grpcpp.h>
+
+#include "helloworld.grpc.pb.h"
+
+using grpc::Server;
+using grpc::ServerBuilder;
+using grpc::ServerContext;
+using grpc::Status;
+using helloworld::HelloRequest;
+using helloworld::HelloReply;
+using helloworld::Greeter;
+//grpc end
+
 using bftEngine::ICommunication;
 using bftEngine::PlainUDPCommunication;
 using bftEngine::PlainUdpConfig;
@@ -59,9 +76,9 @@ using bftEngine::SimpleClient;
 concordlogger::Logger clientLogger =
     concordlogger::Logger::getLogger("simpletest.client");
 
-#define test_assert(statement, message) \
-{ if (!(statement)) { \
-LOG_FATAL(clientLogger, "assert fail with message: " << message); assert(false);}}
+// #define test_assert(statement, message) \
+// { if (!(statement)) { \
+// LOG_FATAL(clientLogger, "assert fail with message: " << message); assert(false);}}
 
 void parse_params(int argc, char** argv, ClientParams &cp,
     bftEngine::SimpleClientParams &scp) {
@@ -175,223 +192,278 @@ void parse_params(int argc, char** argv, ClientParams &cp,
 
 }
 
+//global variables
+ClientParams cp;
+bftEngine::SimpleClientParams scp;
+SimpleClient* client;
+
+//grpc execution class and function,
+class GreeterServiceImpl final : public Greeter::Service {
+  Status SayHello(ServerContext* context, const HelloRequest* request,
+                  HelloReply* reply) override {
+    std::string prefix("Helfgtdlgoo ");
+    reply->set_message(prefix + request->name());
+
+    //concord start
+
+
+      // The state number that the latest write operation returned.
+      // uint64_t expectedStateNum = 0;
+    // 
+      // The expectedStateNum is not valid until we have issued at least one write
+      // operation.
+      // bool hasExpectedStateNum = false;
+
+      // The value that the latest write operation sent.
+      // uint64_t expectedLastValue = 0;
+
+      // The expectedLastValue is not valid until we have issued at least one write
+      // operation.
+      // bool hasExpectedLastValue = false;
+
+      LOG_INFO(clientLogger, "Starting " << cp.numOfOperations);
+      const int readMod = 7;
+      SeqNumberGeneratorForClientRequests* pSeqGen =
+          SeqNumberGeneratorForClientRequests::
+          createSeqNumberGeneratorForClientRequests();
+
+      for (uint32_t i = 1; i <= cp.numOfOperations; i++) {
+
+        // // the python script that runs the client needs to know how many
+        // // iterations has been done - that's the reason we use printf and not
+        // // logging module - to keep the output exactly as we expect.
+        // if(i > 0 && i % 100 == 0) {
+        //   printf("Iterations count: 100\n");
+        //   printf("Total iterations count: %i\n", i);
+        // }
+
+
+        if (i % readMod == 0) {
+          // Read the latest value every readMod-th operation.
+
+          // Prepare request parameters.
+          const bool readOnly = true;
+
+          const uint32_t kRequestLength = 1;
+          const uint64_t requestBuffer[kRequestLength] = {READ_VAL_REQ};
+          const char* rawRequestBuffer =
+              reinterpret_cast<const char*>(requestBuffer);
+          const uint32_t rawRequestLength = sizeof(uint64_t) * kRequestLength;
+
+          const uint64_t requestSequenceNumber =
+              pSeqGen->generateUniqueSequenceNumberForRequest();
+
+          const uint64_t timeout = SimpleClient::INFINITE_TIMEOUT;
+
+          const uint32_t kReplyBufferLength = sizeof(uint64_t);
+          char replyBuffer[kReplyBufferLength];
+          uint32_t actualReplyLength = 0;
+
+          client->sendRequest(readOnly,
+                              rawRequestBuffer, rawRequestLength,
+                              requestSequenceNumber,
+                              timeout,
+                              kReplyBufferLength, replyBuffer, actualReplyLength);
+
+          // Read should respond with eight bytes of data.
+
+           // printf("\n---------------------------------------------------------------\n");
+
+
+          // test_assert(actualReplyLength == sizeof(uint64_t),
+              // "actualReplyLength != " << sizeof(uint64_t));
+
+          LOG_INFO(clientLogger, "Ashwin_Sekhari_read" << *reinterpret_cast<uint64_t*>(replyBuffer));
+
+          // Only assert the last expected value if we have previous set a value.
+          // if (hasExpectedLastValue)
+            // test_assert(
+                // *reinterpret_cast<uint64_t*>(replyBuffer) == expectedLastValue,
+                // "*reinterpret_cast<uint64_t*>(replyBuffer)!=" << expectedLastValue);
+        } else {
+          // Send a write, if we're not doing a read.
+
+          // Generate a value to store.
+          // expectedLastValue = (i + 1)*(i + 7)*(i + 18);
+          uint64_t mode = 3;
+
+          // Prepare request parameters.
+          const bool readOnly = false;
+
+          
+          std::string test = "{ \"Mode\": \"Quorum_Size\", \"ip\": [\"8.8.8.8\", \"8.8.8.9\", \"8.8.9.8\"]}"; // Request to send.
+
+
+
+
+          // std::cout << "Enter string:";
+          // std::cin >> test;
+          //take string as input;
+          // getline(cin,test);
+          /* Expects JSON string as input, 
+             if using directly send input without \" just put normal quotes, { "Mode": "Quorum_Size", "ip": ["8.8.8.8", "8.8.8.9", "8.88"]}
+             if sending input from bash do it using ../client <<< "{ \"Mode\": \"Quorum_Size\", \"ip\": [\"8.8.8.8\", \"8.8.8.9\", \"8.88\"]}"
+          */
+          std::cout << test << "\n";
+
+
+          // std::cin >> test;
+          //Converting request string to char array;
+          const uint32_t kRequestLength = test.length();
+          char requestBuffer[kRequestLength];
+          
+          for (uint32_t i = 0; i < test.length(); ++i)
+          {
+              requestBuffer[i] = (char) test[i];    // Converting string to char
+          }
+
+          const char* rawRequestBuffer =
+              reinterpret_cast<const char*>(requestBuffer);
+          
+          const uint32_t rawRequestLength = kRequestLength;
+
+          const uint64_t requestSequenceNumber =
+              pSeqGen->generateUniqueSequenceNumberForRequest();
+
+          const uint64_t timeout = SimpleClient::INFINITE_TIMEOUT;
+
+          const uint32_t kReplyBufferLength = sizeof(uint64_t);
+          
+          char replyBuffer[kReplyBufferLength];
+          
+          uint32_t actualReplyLength = 0;
+
+          client->sendRequest(readOnly,
+                              rawRequestBuffer, rawRequestLength,
+                              requestSequenceNumber,
+                              timeout,
+                              kReplyBufferLength, replyBuffer, actualReplyLength);
+
+          // We can now check the expected value on the next read.
+          // hasExpectedLastValue = true;
+
+          // Write should respond with eight bytes of data.
+          // LOG_INFO(clientLogger, "\n huhkuhuahsdkasdbnjlkbghsbjesnbgbbsdfsfbjksjfksjfsnjnjkl;naskjfnha;s \n" << mode);
+
+          // printf("\n---------------------------------------------------------------\n");
+
+          // test_assert(actualReplyLength == sizeof(uint64_t),
+              // "actualReplyLength != " << sizeof(uint64_t));
+
+          // char* retVal = reinterpret_cast<char*>(replyBuffer);
+
+          // // LOG_INFO(clientLogger, "Ashwin_Sekhari_write" << *retVal << *(retVal+1) << *(retVal+2);
+
+          // // We don't know what state number to expect from the first request. The
+          // // replicas might still be up from a previous run of this test.
+          // if (hasExpectedStateNum) {
+          //   // If we had done a previous write, then this write should return the
+          //   // state number right after the state number that that write returned.
+          //   expectedStateNum++;
+          //   // test_assert(retVal == expectedStateNum,
+          //       // "retVal != " << expectedLastValue);
+          // } else {
+          //   hasExpectedStateNum = true;
+          //   // expectedStateNum = retVal;
+          // }
+        }
+      }
+
+      // After all requests have been issued, stop communication and clean up.
+      // comm->Stop();
+
+      // delete pSeqGen;
+      // delete client;
+      // delete comm;
+
+      // LOG_INFO(clientLogger, "test done, iterations: " << cp.numOfOperations);
+
+      //concord request end,
+    return Status::OK;
+  }
+};
+
+//global parameters,
+
+
 int main(int argc, char **argv) {
-// TODO(IG:) configure Log4Cplus's output format, using default for now
-#ifdef USE_LOG4CPP
-  using namespace log4cplus;
-  initialize();
-  BasicConfigurator config;
-  config.configure();
-#endif
-
-  ClientParams cp;
-  bftEngine::SimpleClientParams scp;
   parse_params(argc, argv, cp, scp);
+  // RunServer();
+  std::string server_address("0.0.0.0:50051");
+  GreeterServiceImpl service;
 
-  LOG_INFO(clientLogger, "SimpleClientParams: clientInitialRetryTimeoutMilli: " << scp.clientInitialRetryTimeoutMilli
-    << ", clientMinRetryTimeoutMilli: " << scp.clientMinRetryTimeoutMilli
-    << ", clientMaxRetryTimeoutMilli: " << scp.clientMaxRetryTimeoutMilli
-    << ", clientSendsRequestToAllReplicasFirstThresh: " << scp.clientSendsRequestToAllReplicasFirstThresh
-    << ", clientSendsRequestToAllReplicasPeriodThresh: " << scp.clientSendsRequestToAllReplicasPeriodThresh
-    << ", clientPeriodicResetThresh: " << scp.clientPeriodicResetThresh);
+  ServerBuilder builder;
+  // Listen on the given address without any authentication mechanism.
+  builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+  // Register "service" as the instance through which we'll communicate with
+  // clients. In this case it corresponds to an *synchronous* service.
+  builder.RegisterService(&service);
+  // Finally assemble the server.
+  std::unique_ptr<Server> server(builder.BuildAndStart());
+  std::cout << "Server listening on " << server_address << std::endl;
+  #ifdef USE_LOG4CPP
+    using namespace log4cplus;
+    initialize();
+    BasicConfigurator config;
+    config.configure();
+  #endif
 
-  // This client's index number. Must be larger than the largest replica index
-  // number.
-  const uint16_t id = cp.clientId;
+    LOG_INFO(clientLogger, "SimpleClientParams: clientInitialRetryTimeoutMilli: " << scp.clientInitialRetryTimeoutMilli
+      << ", clientMinRetryTimeoutMilli: " << scp.clientMinRetryTimeoutMilli
+      << ", clientMaxRetryTimeoutMilli: " << scp.clientMaxRetryTimeoutMilli
+      << ", clientSendsRequestToAllReplicasFirstThresh: " << scp.clientSendsRequestToAllReplicasFirstThresh
+      << ", clientSendsRequestToAllReplicasPeriodThresh: " << scp.clientSendsRequestToAllReplicasPeriodThresh
+      << ", clientPeriodicResetThresh: " << scp.clientPeriodicResetThresh);
+   const uint16_t id = cp.clientId;
 
   // How often to read the latest value of the register (every `readMod` ops).
-  const int readMod = 7;
 
-  // Concord clients must tag each request with a unique sequence number. This
-  // generator handles that for us.
-  SeqNumberGeneratorForClientRequests* pSeqGen =
-      SeqNumberGeneratorForClientRequests::
-      createSeqNumberGeneratorForClientRequests();
 
-  TestCommConfig testCommConfig(clientLogger);
-  // Configure, create, and start the Concord client to use.
-#ifdef USE_COMM_PLAIN_TCP
-  PlainTcpConfig conf = testCommConfig.GetTCPConfig(
-      false, id, cp.numOfClients, cp.numOfReplicas, cp.configFileName);
-#elif USE_COMM_TLS_TCP
-  TlsTcpConfig conf = testCommConfig.GetTlsTCPConfig(
-      false, id, cp.numOfClients, cp.numOfReplicas, cp.configFileName);
-#else
-  PlainUdpConfig conf = testCommConfig.GetUDPConfig(
-      false, id, cp.numOfClients, cp.numOfReplicas, cp.configFileName);
-#endif
+    // Concord clients must tag each request with a unique sequence number. This
+    // generator handles that for us.
 
-  LOG_INFO(clientLogger, "ClientParams: clientId: "
-                         << cp.clientId
-                         << ", numOfReplicas: " << cp.numOfReplicas
-                         << ", numOfClients: " << cp.numOfClients
-                         << ", numOfIterations: " << cp.numOfOperations
-                         << ", fVal: " << cp.numOfFaulty
-                         << ", cVal: " << cp.numOfSlow);
 
-  // Perform this check once all parameters configured.
-  if (3 * cp.numOfFaulty + 2 * cp.numOfSlow + 1 != cp.numOfReplicas) {
-    LOG_FATAL(clientLogger, "Number of replicas is not equal to 3f + 2c + 1 :"
-                            " f=" << cp.numOfFaulty << ", c=" << cp.numOfSlow <<
-                            ", numOfReplicas=" << cp.numOfReplicas);
-    exit(-1);
-  }
+    TestCommConfig testCommConfig(clientLogger);
+    // Configure, create, and start the Concord client to use.
+  #ifdef USE_COMM_PLAIN_TCP
+    PlainTcpConfig conf = testCommConfig.GetTCPConfig(
+        false, id, cp.numOfClients, cp.numOfReplicas, cp.configFileName);
+  #elif USE_COMM_TLS_TCP
+    TlsTcpConfig conf = testCommConfig.GetTlsTCPConfig(
+        false, id, cp.numOfClients, cp.numOfReplicas, cp.configFileName);
+  #else
+    PlainUdpConfig conf = testCommConfig.GetUDPConfig(
+        false, id, cp.numOfClients, cp.numOfReplicas, cp.configFileName);
+  #endif
 
-  ICommunication* comm = bftEngine::CommFactory::create(conf);
+    LOG_INFO(clientLogger, "ClientParams: clientId: "
+                           << cp.clientId   
+                           << ", numOfReplicas: " << cp.numOfReplicas
+                           << ", numOfClients: " << cp.numOfClients
+                           << ", numOfIterations: " << cp.numOfOperations
+                           << ", fVal: " << cp.numOfFaulty
+                           << ", cVal: " << cp.numOfSlow);
 
-  SimpleClient* client =
-      SimpleClient::createSimpleClient(comm, id, cp.numOfFaulty, cp.numOfSlow);
-  comm->Start();
-
-  // The state number that the latest write operation returned.
-  uint64_t expectedStateNum = 0;
-
-  // The expectedStateNum is not valid until we have issued at least one write
-  // operation.
-  bool hasExpectedStateNum = false;
-
-  // The value that the latest write operation sent.
-  uint64_t expectedLastValue = 0;
-
-  // The expectedLastValue is not valid until we have issued at least one write
-  // operation.
-  bool hasExpectedLastValue = false;
-
-  LOG_INFO(clientLogger, "Starting " << cp.numOfOperations);
-
-  for (uint32_t i = 1; i <= cp.numOfOperations; i++) {
-
-    // the python script that runs the client needs to know how many
-    // iterations has been done - that's the reason we use printf and not
-    // logging module - to keep the output exactly as we expect.
-    if(i > 0 && i % 100 == 0) {
-      printf("Iterations count: 100\n");
-      printf("Total iterations count: %i\n", i);
+    // Perform this check once all parameters configured.
+    if (3 * cp.numOfFaulty + 2 * cp.numOfSlow + 1 != cp.numOfReplicas) {
+      LOG_FATAL(clientLogger, "Number of replicas is not equal to 3f + 2c + 1 :"
+                              " f=" << cp.numOfFaulty << ", c=" << cp.numOfSlow <<
+                              ", numOfReplicas=" << cp.numOfReplicas);
+      exit(-1);
     }
 
-    if (i % readMod == 0) {
-      // Read the latest value every readMod-th operation.
+    ICommunication* comm = bftEngine::CommFactory::create(conf);
 
-      // Prepare request parameters.
-      const bool readOnly = true;
+    client =
+        SimpleClient::createSimpleClient(comm, id, cp.numOfFaulty, cp.numOfSlow);
+    comm->Start();
 
-      const uint32_t kRequestLength = 1;
-      const uint64_t requestBuffer[kRequestLength] = {READ_VAL_REQ};
-      const char* rawRequestBuffer =
-          reinterpret_cast<const char*>(requestBuffer);
-      const uint32_t rawRequestLength = sizeof(uint64_t) * kRequestLength;
-
-      const uint64_t requestSequenceNumber =
-          pSeqGen->generateUniqueSequenceNumberForRequest();
-
-      const uint64_t timeout = SimpleClient::INFINITE_TIMEOUT;
-
-      const uint32_t kReplyBufferLength = sizeof(uint64_t);
-      char replyBuffer[kReplyBufferLength];
-      uint32_t actualReplyLength = 0;
-
-      client->sendRequest(readOnly,
-                          rawRequestBuffer, rawRequestLength,
-                          requestSequenceNumber,
-                          timeout,
-                          kReplyBufferLength, replyBuffer, actualReplyLength);
-
-      // Read should respond with eight bytes of data.
-
-       // printf("\n---------------------------------------------------------------\n");
-
-
-      // test_assert(actualReplyLength == sizeof(uint64_t),
-          // "actualReplyLength != " << sizeof(uint64_t));
-
-      LOG_INFO(clientLogger, "Ashwin_Sekhari_read" << *reinterpret_cast<uint64_t*>(replyBuffer));
-
-      // Only assert the last expected value if we have previous set a value.
-      // if (hasExpectedLastValue)
-        // test_assert(
-            // *reinterpret_cast<uint64_t*>(replyBuffer) == expectedLastValue,
-            // "*reinterpret_cast<uint64_t*>(replyBuffer)!=" << expectedLastValue);
-    } else {
-      // Send a write, if we're not doing a read.
-
-      // Generate a value to store.
-      expectedLastValue = (i + 1)*(i + 7)*(i + 18);
-      uint64_t mode= 3;
-
-      // Prepare request parameters.
-      const bool readOnly = false;
-
-      
-      std::string test = "{ \"Mode\": \"Quorum_Size\", \"ip\": [\"8.8.8.8\", \"8.8.8.9\", \"8.8.9.8\"]}"; // Request to send.
-
-      //Converting request string to char array;
-      const uint32_t kRequestLength = test.length();
-      char requestBuffer[kRequestLength];
-      
-      for (uint32_t i = 0; i < test.length(); ++i)
-      {
-          requestBuffer[i] = (char) test[i];    // Converting string to char
-      }
-
-      const char* rawRequestBuffer =
-          reinterpret_cast<const char*>(requestBuffer);
-      
-      const uint32_t rawRequestLength = kRequestLength;
-
-      const uint64_t requestSequenceNumber =
-          pSeqGen->generateUniqueSequenceNumberForRequest();
-
-      const uint64_t timeout = SimpleClient::INFINITE_TIMEOUT;
-
-      const uint32_t kReplyBufferLength = sizeof(uint64_t);
-      
-      char replyBuffer[kReplyBufferLength];
-      
-      uint32_t actualReplyLength = 0;
-
-      client->sendRequest(readOnly,
-                          rawRequestBuffer, rawRequestLength,
-                          requestSequenceNumber,
-                          timeout,
-                          kReplyBufferLength, replyBuffer, actualReplyLength);
-
-      // We can now check the expected value on the next read.
-      hasExpectedLastValue = true;
-
-      // Write should respond with eight bytes of data.
-      // LOG_INFO(clientLogger, "\n huhkuhuahsdkasdbnjlkbghsbjesnbgbbsdfsfbjksjfksjfsnjnjkl;naskjfnha;s \n" << mode);
-
-      // printf("\n---------------------------------------------------------------\n");
-
-      // test_assert(actualReplyLength == sizeof(uint64_t),
-          // "actualReplyLength != " << sizeof(uint64_t));
-
-      char* retVal = reinterpret_cast<char*>(replyBuffer);
-
-      // LOG_INFO(clientLogger, "Ashwin_Sekhari_write" << *retVal << *(retVal+1) << *(retVal+2);
-
-      // We don't know what state number to expect from the first request. The
-      // replicas might still be up from a previous run of this test.
-      if (hasExpectedStateNum) {
-        // If we had done a previous write, then this write should return the
-        // state number right after the state number that that write returned.
-        expectedStateNum++;
-        // test_assert(retVal == expectedStateNum,
-            // "retVal != " << expectedLastValue);
-      } else {
-        hasExpectedStateNum = true;
-        // expectedStateNum = retVal;
-      }
-    }
-  }
-
-  // After all requests have been issued, stop communication and clean up.
-  comm->Stop();
-
-  delete pSeqGen;
-  delete client;
-  delete comm;
-
-  LOG_INFO(clientLogger, "test done, iterations: " << cp.numOfOperations);
+    // This client's index number. Must be larger than the largest replica index
+    // number.
+   
+  // std::cout << "tets " <<ki << std::endl;
+  // Wait for the server to shutdown. Note that some other thread must be
+  // responsible for shutting down the server for this call to ever return.
+  server->Wait();
   return 0;
 }

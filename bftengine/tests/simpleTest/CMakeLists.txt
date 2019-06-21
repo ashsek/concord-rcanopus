@@ -1,4 +1,8 @@
 set(simpleTest_client_source_files
+    helloworld.pb.h
+    helloworld.pb.cc
+    helloworld.grpc.pb.h
+    helloworld.grpc.pb.cc
     client.cpp
         ${CONFIG_FOLDER_PATH_VALUE}/test_comm_config.cpp
         ${CONFIG_FOLDER_PATH_VALUE}/config_file_parser.cpp
@@ -55,6 +59,10 @@ set_target_properties(simpleTest_server PROPERTIES OUTPUT_NAME server)
 set_target_properties(configTest PROPERTIES OUTPUT_NAME config)
 
 target_link_libraries(simpleTest_client PUBLIC corebft)
+target_link_libraries(simpleTest_client PUBLIC grpc++)
+target_link_libraries(simpleTest_client PUBLIC protobuf)
+target_link_libraries(simpleTest_client PUBLIC grpc)
+
 target_link_libraries(simpleTest_server PUBLIC corebft)
 target_link_libraries(simpleTest_server PUBLIC -lcurl)
 target_link_libraries(configTest PUBLIC corebft)

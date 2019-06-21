@@ -214,6 +214,7 @@ class SimpleAppState : public RequestsHandler {
     numOfClients{numCl},
     numOfReplicas{numRep} {}
 
+  //to convert chartacter byte stream back to string,
   string parse_char_string(const char * request, uint32_t requestSize){
 
       std::string request_string = "";
@@ -275,8 +276,12 @@ class SimpleAppState : public RequestsHandler {
 
       std::string request_string = parse_char_string(request, requestSize); // Casting char * to string.
 
+      cout << request_string << "2.-----\n";
       jsonxx::Object p;
       p.parse(request_string); // Converting our string to json;
+
+      cout << p.json() << "1.-----\n";
+
 
       // Modify the register state.
       // set_last_state_value(clientId, *pReqVal);
@@ -294,20 +299,28 @@ class SimpleAppState : public RequestsHandler {
       st->markUpdate(statePtr, sizeof(State) * numOfClients);
       
 
+      /* TODO:
+          1. Make separate cases for everything.
+          2. Send JSON back to client in request messages (Altough not necessary)
+          3. Try to figure out how to add quorum certificates (for now use FullProofCommitMessage)
+          4. Need to integrate it with canopus somehow.
+      */
+
       //Different cases for different API.
       if(p.get<jsonxx::String>("Mode") == "Quorum_Size"){
-          wezside::CouchDBXX couch;
+          wezside::CouchDBXX couch;  // Object for couchdb
 
-          jsonxx::Object body;
-          jsonxx::Object o = couch.doc("global_membership_service","quorum_size");
-          //std::cout << "----- Create DB 'test' -----" << std::endl;
-          std::cout << o.json() << std::endl;
-          body << "_id" << "quorum_size";
-          body << "_rev" << o.get<string>("_rev");
-          body << "10.0.2.9" << p.get<jsonxx::Array>("ip");
+          jsonxx::Object body; // JSON object
+          jsonxx::Object o = couch.doc("global_membership_service","quorum_size"); // Fetch document quorum_size from global_membership_service.
+          std::cout << o.json() << std::endl; // Print the data fetched from membership service on the console
+
+          body << "_id" << "quorum_size";  //id determines which document to edit
+          body << "_rev" << o.get<string>("_rev"); // rev should match previous rev else the document wont be updated
+          body << "10.0.2.9" << p.get<jsonxx::Array>("ip"); // "key" << "value"
+
           // body << "mode" << ;
           // body << "timestamp" << static_cast<std::ostringstream*>( &(std::ostringstream() << time(NULL)))->str();
-          o = couch.put("global_membership_service", body);
+          o = couch.put("global_membership_service", body); //Sending the JSON document back to couchdb;
           std::cout << o.json() << std::endl;
       }
     }
