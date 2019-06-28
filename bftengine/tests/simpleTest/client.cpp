@@ -192,6 +192,7 @@ void parse_params(int argc, char** argv, ClientParams &cp,
 
 }
 
+
 //global variables
 ClientParams cp;
 bftEngine::SimpleClientParams scp;
@@ -199,27 +200,32 @@ SimpleClient* client;
 
 //grpc execution class and function,
 class GreeterServiceImpl final : public Greeter::Service {
+
+  //to convert chartacter byte stream back to string,
+  string parse_char_string(char * request2, uint32_t requestSize2){
+
+      std::string request_string = "";
+
+      char* pReqId2 = request2;
+      cout << "yoolo:" << pReqId2;
+      for (uint32_t i = 0; i < requestSize2; ++i)
+      {
+          cout << "yoolo:" << *pReqId2;
+          std::string char_request(1, *pReqId2); //conerting requests from char * back to string.
+          request_string +=  char_request;
+          pReqId2++;
+      }
+
+      return request_string;
+  }
+
+
   Status SayHello(ServerContext* context, const HelloRequest* request,
                   HelloReply* reply) override {
-    std::string prefix("Helfgtdlgoo ");
+    std::string prefix("Concord");
     reply->set_message(prefix + request->name());
 
     //concord start
-
-
-      // The state number that the latest write operation returned.
-      // uint64_t expectedStateNum = 0;
-    // 
-      // The expectedStateNum is not valid until we have issued at least one write
-      // operation.
-      // bool hasExpectedStateNum = false;
-
-      // The value that the latest write operation sent.
-      // uint64_t expectedLastValue = 0;
-
-      // The expectedLastValue is not valid until we have issued at least one write
-      // operation.
-      // bool hasExpectedLastValue = false;
 
       LOG_INFO(clientLogger, "Starting " << cp.numOfOperations);
       const int readMod = 7;
@@ -232,10 +238,6 @@ class GreeterServiceImpl final : public Greeter::Service {
         // // the python script that runs the client needs to know how many
         // // iterations has been done - that's the reason we use printf and not
         // // logging module - to keep the output exactly as we expect.
-        // if(i > 0 && i % 100 == 0) {
-        //   printf("Iterations count: 100\n");
-        //   printf("Total iterations count: %i\n", i);
-        // }
 
 
         if (i % readMod == 0) {
@@ -273,7 +275,7 @@ class GreeterServiceImpl final : public Greeter::Service {
           // test_assert(actualReplyLength == sizeof(uint64_t),
               // "actualReplyLength != " << sizeof(uint64_t));
 
-          LOG_INFO(clientLogger, "Ashwin_Sekhari_read" << *reinterpret_cast<uint64_t*>(replyBuffer));
+          LOG_INFO(clientLogger, "Server_output_read" << *reinterpret_cast<uint64_t*>(replyBuffer));
 
           // Only assert the last expected value if we have previous set a value.
           // if (hasExpectedLastValue)
@@ -291,8 +293,8 @@ class GreeterServiceImpl final : public Greeter::Service {
           const bool readOnly = false;
 
           
-          std::string test = "{ \"Mode\": \"Quorum_Size\", \"ip\": [\"8.8.8.8\", \"8.8.8.9\", \"8.8.9.8\"]}"; // Request to send.
-
+          // std::string test = "{ \"Mode\": \"Quorum_Size\", \"ip\": [\"8.8.8.8\", \"8.8.8.9\", \"8.8.9.8\"]}"; // Request to send.
+          std::string test = request->name();
 
 
 
@@ -327,45 +329,35 @@ class GreeterServiceImpl final : public Greeter::Service {
 
           const uint64_t timeout = SimpleClient::INFINITE_TIMEOUT;
 
-          const uint32_t kReplyBufferLength = sizeof(uint64_t);
+          const uint32_t kReplyBufferLength = 100;
           
-          char replyBuffer[kReplyBufferLength];
-          
+          char rawReplyBuffer[kReplyBufferLength];
+ 
+          char* rawReplyBuffer2 = reinterpret_cast<char*>(rawReplyBuffer);
+ 
           uint32_t actualReplyLength = 0;
 
           client->sendRequest(readOnly,
                               rawRequestBuffer, rawRequestLength,
                               requestSequenceNumber,
                               timeout,
-                              kReplyBufferLength, replyBuffer, actualReplyLength);
+                              kReplyBufferLength, rawReplyBuffer2, actualReplyLength);
 
-          // We can now check the expected value on the next read.
-          // hasExpectedLastValue = true;
+          char* pReqId  = rawReplyBuffer2;
+          
+          // std::string request_string = parse_char_string(retVal, actualReplyLength);
+          std::string request_string = "";
 
-          // Write should respond with eight bytes of data.
-          // LOG_INFO(clientLogger, "\n huhkuhuahsdkasdbnjlkbghsbjesnbgbbsdfsfbjksjfksjfsnjnjkl;naskjfnha;s \n" << mode);
+          // char* pReqId = retVal;
 
-          // printf("\n---------------------------------------------------------------\n");
+          for (uint32_t i = 0; i < actualReplyLength; ++i)
+          {
+              std::string char_request(1, *pReqId); //converting requests from char * back to string.
+              request_string +=  char_request;
+              pReqId++;
+          }
 
-          // test_assert(actualReplyLength == sizeof(uint64_t),
-              // "actualReplyLength != " << sizeof(uint64_t));
-
-          // char* retVal = reinterpret_cast<char*>(replyBuffer);
-
-          // // LOG_INFO(clientLogger, "Ashwin_Sekhari_write" << *retVal << *(retVal+1) << *(retVal+2);
-
-          // // We don't know what state number to expect from the first request. The
-          // // replicas might still be up from a previous run of this test.
-          // if (hasExpectedStateNum) {
-          //   // If we had done a previous write, then this write should return the
-          //   // state number right after the state number that that write returned.
-          //   expectedStateNum++;
-          //   // test_assert(retVal == expectedStateNum,
-          //       // "retVal != " << expectedLastValue);
-          // } else {
-          //   hasExpectedStateNum = true;
-          //   // expectedStateNum = retVal;
-          // }
+          LOG_INFO(clientLogger, "Server_output_read" << request_string << actualReplyLength);// << *retVal);
         }
       }
 
@@ -387,9 +379,9 @@ class GreeterServiceImpl final : public Greeter::Service {
 
 
 int main(int argc, char **argv) {
-  parse_params(argc, argv, cp, scp);
+  parse_params(argc, argv, cp, scp); // parameters for concord 
   // RunServer();
-  std::string server_address("0.0.0.0:50051");
+  std::string server_address("0.0.0.0:50051"); // server for grpc
   GreeterServiceImpl service;
 
   ServerBuilder builder;
@@ -456,14 +448,13 @@ int main(int argc, char **argv) {
 
     client =
         SimpleClient::createSimpleClient(comm, id, cp.numOfFaulty, cp.numOfSlow);
-    comm->Start();
+    comm->Start(); // concord client communication start.
 
     // This client's index number. Must be larger than the largest replica index
     // number.
-   
-  // std::cout << "tets " <<ki << std::endl;
+  
   // Wait for the server to shutdown. Note that some other thread must be
   // responsible for shutting down the server for this call to ever return.
-  server->Wait();
+  server->Wait(); //grpc server wait.
   return 0;
 }

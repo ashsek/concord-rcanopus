@@ -53,6 +53,7 @@
 #include <cassert>
 #include <thread>
 #include <csignal>
+#include <cstring>
 
 // bftEngine includes
 #include "CommFactory.hpp"
@@ -286,17 +287,17 @@ class SimpleAppState : public RequestsHandler {
       // Modify the register state.
       // set_last_state_value(clientId, *pReqVal);
       // Count the number of times we've modified it.
-      auto stateNum = get_last_state_num(clientId);
+      // auto stateNum = get_last_state_num(clientId);
       // set_last_state_num(clientId, stateNum + 1);
 
       // Reply with the number of times we've modified the register.
       // test_assert(maxReplySize >= sizeof(uint64_t),
           // "maxReplySize < " << sizeof(uint64_t));
-      uint64_t* pRet = reinterpret_cast<uint64_t*>(outReply);
-      *pRet = stateNum;
-      outActualReplySize = sizeof(uint64_t);
+      // uint64_t* pRet = reinterpret_cast<uint64_t*>(outReply);
+      // *pRet = stateNum;
+      // outActualReplySize = sizeof(uint64_t);
 
-      st->markUpdate(statePtr, sizeof(State) * numOfClients);
+      // st->markUpdate(statePtr, sizeof(State) * numOfClients);
       
 
       /* TODO:
@@ -306,7 +307,54 @@ class SimpleAppState : public RequestsHandler {
           4. Need to integrate it with canopus somehow.
       */
 
+      //-------------------Partial proof commit message ------------------
+      // SeqNumInfo& seqNumInfo = mainLog->get(lastExecutedSeqNum + 1);
+      // PartialProofsSet& pps = seqNumInfo.partialProofs();
+      // LOG_INFO_F(GL, "\nReplica %d - executeRequestsInPrePrepareMsg()===> %d ", (int) myReplicaId, pps.hasFullProof());
+      // if (pps.hasFullProof()) {
+      // FullCommitProofMsg* fcp = pps.getFullProof();
+      // const char* sigBuf = fcp->thresholSignature();
+      // uint16_t sigLen = fcp->thresholSignatureLength();
+      // unsigned char * result = nullptr;
+      // // result = atoh((unsigned char *) sigBuf, sigLen, &result);
+      // LOG_INFO_F(GL, "\nReplica %d - executeRequestsInPrePrepareMsg()===> %s %" PRId64 "", (int) myReplicaId, result, lastExecutedSeqNum + 1);
+      // }
+
+
+      //-----------------------------testing to send JSON back to client ----------------------------
+      // char test[20] = { 'h', 'e', 'l', 'l', 'o', '\0' }; 
+      // char test[] = "hello"; 
+      
+      
+
+      // // std::cout << test << "\n;
+      // //Converting request string to char array;
+      std::string test = "worldhello";
+      const uint32_t kReplyLength = test.length();
+      char replyBuffer[kReplyLength];
+      
+      for (uint32_t i = 0; i < test.length(); ++i)
+      {
+          replyBuffer[i] = (char) test[i];    // Converting string to char array
+      }
+
+      // // char* replyBuffer2 =
+      // // reinterpret_cast<char*>(replyBuffer);
+      std::strcpy(outReply, replyBuffer);
+
+      // // outReply = rawRequestBuffer;
+      outActualReplySize = kReplyLength;
+
+      // // char* pRet = reinterpret_cast<char*>(outReply);
+      // // outReply = replyBuffer2;
+
+      // *outReply = *reinterpret_cast<char*>(replyBuffer);
+           // auto lastValue = *reinterpret_cast<char*>(replyBuffer);
+           // *pRet = lastValue;
+      //---- testing end ----------------------------------------------------------------------------
+
       //Different cases for different API.
+
       if(p.get<jsonxx::String>("Mode") == "Quorum_Size"){
           wezside::CouchDBXX couch;  // Object for couchdb
 
