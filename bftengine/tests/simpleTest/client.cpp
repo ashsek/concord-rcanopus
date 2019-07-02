@@ -61,6 +61,7 @@ using grpc::Status;
 using helloworld::HelloRequest;
 using helloworld::HelloReply;
 using helloworld::Greeter;
+
 //grpc end
 
 using bftEngine::ICommunication;
@@ -207,10 +208,10 @@ class GreeterServiceImpl final : public Greeter::Service {
       std::string request_string = "";
 
       char* pReqId2 = request2;
-      cout << "yoolo:" << pReqId2;
+      // cout << "yoolo:" << pReqId2;
       for (uint32_t i = 0; i < requestSize2; ++i)
       {
-          cout << "yoolo:" << *pReqId2;
+          // cout << "yoolo:" << *pReqId2;
           std::string char_request(1, *pReqId2); //conerting requests from char * back to string.
           request_string +=  char_request;
           pReqId2++;
@@ -220,15 +221,16 @@ class GreeterServiceImpl final : public Greeter::Service {
   }
 
 
+// grpc request handler, 
   Status SayHello(ServerContext* context, const HelloRequest* request,
                   HelloReply* reply) override {
-    std::string prefix("Concord");
-    reply->set_message(prefix + request->name());
+    // std::string prefix("Concord");
+    
 
     //concord start
 
       LOG_INFO(clientLogger, "Starting " << cp.numOfOperations);
-      const int readMod = 7;
+      const int readMod = 1;
       SeqNumberGeneratorForClientRequests* pSeqGen =
           SeqNumberGeneratorForClientRequests::
           createSeqNumberGeneratorForClientRequests();
@@ -245,9 +247,17 @@ class GreeterServiceImpl final : public Greeter::Service {
 
           // Prepare request parameters.
           const bool readOnly = true;
+          
+          std::string test = request->name();
+          //Converting request string to char array;
+          const uint32_t kRequestLength = test.length();
+          char requestBuffer[kRequestLength];
+          
+          for (uint32_t i = 0; i < test.length(); ++i)
+          {
+              requestBuffer[i] = (char) test[i];    // Converting string to char
+          }
 
-          const uint32_t kRequestLength = 1;
-          const uint64_t requestBuffer[kRequestLength] = {READ_VAL_REQ};
           const char* rawRequestBuffer =
               reinterpret_cast<const char*>(requestBuffer);
           const uint32_t rawRequestLength = sizeof(uint64_t) * kRequestLength;
@@ -256,26 +266,40 @@ class GreeterServiceImpl final : public Greeter::Service {
               pSeqGen->generateUniqueSequenceNumberForRequest();
 
           const uint64_t timeout = SimpleClient::INFINITE_TIMEOUT;
-
-          const uint32_t kReplyBufferLength = sizeof(uint64_t);
-          char replyBuffer[kReplyBufferLength];
+          const uint32_t kReplyBufferLength = 1000000;
+          
+          char rawReplyBuffer[kReplyBufferLength];
+ 
+          char* rawReplyBuffer2 = reinterpret_cast<char*>(rawReplyBuffer);
+ 
           uint32_t actualReplyLength = 0;
 
           client->sendRequest(readOnly,
                               rawRequestBuffer, rawRequestLength,
                               requestSequenceNumber,
                               timeout,
-                              kReplyBufferLength, replyBuffer, actualReplyLength);
+                              kReplyBufferLength, rawReplyBuffer2, actualReplyLength);
 
-          // Read should respond with eight bytes of data.
+          char* pReqId  = rawReplyBuffer2;
+          
+          // std::string request_string = parse_char_string(retVal, actualReplyLength);
+          std::string request_string = "";
 
-           // printf("\n---------------------------------------------------------------\n");
+          // char* pReqId = retVal;
 
+          for (uint32_t i = 0; i < actualReplyLength; ++i)
+          {
+              std::string char_request(1, *pReqId); //converting requests from char * back to string.
+              request_string +=  char_request;
+              pReqId++;
+          }
+          reply->set_message(request_string);
+          LOG_INFO(clientLogger, "Server_output_read_mode_only" << actualReplyLength);
 
           // test_assert(actualReplyLength == sizeof(uint64_t),
               // "actualReplyLength != " << sizeof(uint64_t));
 
-          LOG_INFO(clientLogger, "Server_output_read" << *reinterpret_cast<uint64_t*>(replyBuffer));
+          // LOG_INFO(clientLogger, "Server_output_read_mode_only" << *reinterpret_cast<uint64_t*>(replyBuffer));
 
           // Only assert the last expected value if we have previous set a value.
           // if (hasExpectedLastValue)
@@ -356,7 +380,7 @@ class GreeterServiceImpl final : public Greeter::Service {
               request_string +=  char_request;
               pReqId++;
           }
-
+          reply->set_message(request_string);
           LOG_INFO(clientLogger, "Server_output_read" << request_string << actualReplyLength);// << *retVal);
         }
       }

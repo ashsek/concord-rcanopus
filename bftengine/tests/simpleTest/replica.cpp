@@ -244,30 +244,80 @@ class SimpleAppState : public RequestsHandler {
               char* outReply,
               uint32_t& outActualReplySize) override {
     if (readOnly) {
-      // Our read-only request includes only a type, no argument.
-      test_assert(requestSize == sizeof(uint64_t),
-          "requestSize =! " << sizeof(uint64_t));
 
-      // We only support the READ operation in read-only mode.
-      test_assert(*reinterpret_cast<const uint64_t*>(request) == READ_VAL_REQ,
-          "request is NOT " << READ_VAL_REQ);
+      //Only reading values from couchdb,
+      std::string request_string = parse_char_string(request, requestSize);
+      jsonxx::Object request_json;
+      request_json.parse(request_string);
 
-      // Copy the latest register value to the reply buffer.
-      // test_assert(maxReplySize >= sizeof(uint64_t),
-          // "maxReplySize < " << sizeof(uint64_t));
-      // char* pRet = reinterpret_cast<char*>(outReply);
-      // auto lastValue = get_last_state_value(clientId);
-      // *pRet = "Yolo";
-      // outActualReplySize = sizeof(char);
+   
+      /*
+       Public keys,
+       expects: Mode: public_key, BGID: 0/1/2/3....
+       returns: json of {ip,public key} and quorum certificate
+      */
+      if(request_json.get<jsonxx::String>("Mode") == "public_keys"){
+        wezside::CouchDBXX couch;  // Object for couchdb
 
-      //---- stuff for  couchdb -----------
-      // std::cout << "----- Create DB 'test' -----" << std::endl;
-      // std::cout << o.json() << std::endl;
-      // body << "title" << request;
-      // body << "timestamp" << static_cast<std::ostringstream*>( &(std::ostringstream() << time(NULL)))->str();
-      // o = couch.put("test3", body);
-    // std::cout << "----- Insert new doc -----" << std::endl;
-    // std::cout << o.json() << std::endl; 
+        jsonxx::Object body; // JSON object
+        jsonxx::Object o = couch.doc("global_membership_service","public_keys"); // fetch document public key from couchdb
+        // cout << o.get<jsonxx::Object>(request_json.get<string>("BGID")).json() << '\n';
+
+        string reply_json = o.get<jsonxx::Object>(request_json.get<string>("BGID")).json();
+        // std::string test = "worldhello";
+        const uint32_t kReplyLength = reply_json.length();
+        
+        std::strcpy(outReply, reply_json.c_str());
+        outActualReplySize = kReplyLength;
+      }
+
+      /*
+       Quorum_size,
+       expects: Mode: quorum_size, BGID: 0/1/2/3....
+       returns: json of {cycle_number, certificate, size }
+      */
+      if(request_json.get<jsonxx::String>("Mode") == "quorum_size"){
+        wezside::CouchDBXX couch;  // Object for couchdb
+
+        jsonxx::Object body; // JSON object
+        jsonxx::Object o = couch.doc("global_membership_service","quorum_size"); // fetch document public key from couchdb
+        // cout << o.get<jsonxx::Object>(request_json.get<string>("BGID")).json() << '\n';
+
+        string reply_json = o.get<jsonxx::Object>(request_json.get<string>("BGID")).json();
+        // std::string test = "worldhello";
+        const uint32_t kReplyLength = reply_json.length();
+        
+        std::strcpy(outReply, reply_json.c_str());
+        outActualReplySize = kReplyLength;
+      }
+      
+      /*
+       Byzantine_groups,
+       expects: Mode: byzantine_groups, BGID: 0/1/2/3....
+       returns: json of leader's ip + global quorum certificate
+      */
+      if(request_json.get<jsonxx::String>("Mode") == "byzantine_groups"){
+        wezside::CouchDBXX couch;  // Object for couchdb
+
+        jsonxx::Object body; // JSON object
+        jsonxx::Object o = couch.doc("global_membership_service","byzantine_groups"); // fetch document public key from couchdb
+        // cout << o.get<jsonxx::Object>(request_json.get<string>("BGID")).json() << '\n';
+
+        string reply_json = o.get<jsonxx::Object>(request_json.get<string>("BGID")).json();
+        // std::string test = "worldhello";
+        const uint32_t kReplyLength = reply_json.length();
+        
+        std::strcpy(outReply, reply_json.c_str());
+        outActualReplySize = kReplyLength;
+      }
+
+      /*
+        TODO:
+        Emulators,
+        expects: Mode: emulators, BGID:0/1/2/3, level:0,1,2,3
+        returns: list of ip'ss
+      */
+
 
     } else {
       // Our read-write request includes one eight-byte argument, in addition to
@@ -298,14 +348,6 @@ class SimpleAppState : public RequestsHandler {
       // outActualReplySize = sizeof(uint64_t);
 
       // st->markUpdate(statePtr, sizeof(State) * numOfClients);
-      
-
-      /* TODO:
-          1. Make separate cases for everything.
-          2. Send JSON back to client in request messages (Altough not necessary)
-          3. Try to figure out how to add quorum certificates (for now use FullProofCommitMessage)
-          4. Need to integrate it with canopus somehow.
-      */
 
       //-------------------Partial proof commit message ------------------
       // SeqNumInfo& seqNumInfo = mainLog->get(lastExecutedSeqNum + 1);
@@ -325,22 +367,30 @@ class SimpleAppState : public RequestsHandler {
       // char test[20] = { 'h', 'e', 'l', 'l', 'o', '\0' }; 
       // char test[] = "hello"; 
       
-      
+      //Iterator for JSONxx
+    //     for(auto kv : o.kv_map())
+    //     {
+    //     // jsonxx::Object obj = kv.first->get<std::string>();
+    // // do stuff here
+    //      std::cout << "yo" <<  kv.first << std::endl;
+    //      std::cout << "yo" <<  *kv.second << std::endl;
+    //     }
+
 
       // // std::cout << test << "\n;
       // //Converting request string to char array;
       std::string test = "worldhello";
       const uint32_t kReplyLength = test.length();
-      char replyBuffer[kReplyLength];
+      // char replyBuffer[kReplyLength];
       
-      for (uint32_t i = 0; i < test.length(); ++i)
-      {
-          replyBuffer[i] = (char) test[i];    // Converting string to char array
-      }
+      // for (uint32_t i = 0; i < test.length(); ++i)
+      // {
+      //     replyBuffer[i] = (char) test[i];    // Converting string to char array
+      // }
 
       // // char* replyBuffer2 =
       // // reinterpret_cast<char*>(replyBuffer);
-      std::strcpy(outReply, replyBuffer);
+      std::strcpy(outReply, test.c_str());
 
       // // outReply = rawRequestBuffer;
       outActualReplySize = kReplyLength;

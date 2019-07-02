@@ -1,9 +1,7 @@
 {
   "_id": "byzantine_groups",
-  "leader_ip": [
-    "10.0.2.5",
-    "10.0.2.6",
-    "10.0.2.7",
-    "10.0.2.8"
-  ]
+  "0": {"leader_ip": "8.8.1.2", "cert":"globa_cert"},
+  "1": {"leader_ip": "3.4.1.2", "cert":"globa_cert"},
+  "2": {"leader_ip": "2.3.1.2", "cert":"globa_cert"},
+  "3": {"leader_ip": "5.6.1.2", "cert":"globa_cert"}
 }

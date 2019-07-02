@@ -1,8 +1,7 @@
 {
   "_id": "quorum_size",
-  "cycle": 1,
-  "10.0.2.5": 4,
-  "10.0.2.6": 5,
-  "10.0.2.7": 3,
-  "10.0.2.8": 3
+  "0": {"size":"4", "cycle": "5" , "quorum_cert": "cert"},
+  "1": {"size":"4", "cycle": "5" , "quorum_cert": "cert"},
+  "2": {"size":"4", "cycle": "5" , "quorum_cert": "cert"},
+  "3": {"size":"4", "cycle": "5" , "quorum_cert": "cert"}
 }

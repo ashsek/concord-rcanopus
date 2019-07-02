@@ -163,6 +163,7 @@ namespace bftEngine
 			RequestsHandler* const userRequestsHandler;
 
 			// Threshold signatures
+                        //Stephen:: 
 			IThresholdSigner* thresholdSignerForExecution;
 			IThresholdVerifier* thresholdVerifierForExecution;
 
@@ -495,6 +496,8 @@ namespace bftEngine
 
 			virtual void onRetransmissionsProcessingResults(SeqNum relatedLastStableSeqNum, const ViewNum relatedViewNumber,
 				const std::forward_list<RetSuggestion>* const suggestedRetransmissions) override;  // TODO(GG): use generic iterators 
+                        unsigned char * atoh(const unsigned char *bin, unsigned int binsz,
+                                  unsigned char **result);
 		};
 
 

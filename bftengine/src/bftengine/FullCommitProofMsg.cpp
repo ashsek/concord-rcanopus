@@ -9,6 +9,8 @@
 #include <string.h>
 #include "FullCommitProofMsg.hpp"
 #include "assertUtils.hpp"
+#include "Logger.hpp"
+#include "Utils.h"
 
 namespace bftEngine
 {
@@ -22,6 +24,7 @@ namespace bftEngine
 			b()->seqNum = s;
 			b()->thresholSignatureLength = commitProofSigLength;
 			memcpy(body() + sizeof(FullCommitProofMsgHeader), commitProofSig, commitProofSigLength);
+			LOG_INFO(GL, "\nReplica - FullCommitProofMsg()===> " << Utils::bin2hex(commitProofSig,commitProofSigLength)  << "  " << commitProofSigLength);
 		}
 
 		bool FullCommitProofMsg::ToActualMsgType(const ReplicasInfo& repInfo, MessageBase* inMsg, FullCommitProofMsg*& outMsg)

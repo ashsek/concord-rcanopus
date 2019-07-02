@@ -13,6 +13,7 @@
 #include <condition_variable>
 
 #include "ClientMsgs.hpp"
+#include "CheckpointMsg.hpp"
 #include "SimpleClient.hpp"
 #include "assertUtils.hpp"
 #include "TimeUtils.hpp"
@@ -22,6 +23,7 @@
 #include "MsgsCertificate.hpp"
 #include "DynamicUpperLimitWithSimpleFilter2.hpp"
 #include "Logger.hpp"
+#include "Digest.hpp"
 
 namespace bftEngine
 {
@@ -110,6 +112,7 @@ namespace bftEngine
 
 		void SimpleClientImp::onMessageFromReplica(MessageBase* msg)
 		{
+                    //Stephen: Gets message from a replic - may be execute-ack nsg
 			ClientReplyMsg* replyMsg = nullptr;
 			if (!ClientReplyMsg::ToActualMsgType(_clientId, msg, replyMsg))
 			{
@@ -121,16 +124,16 @@ namespace bftEngine
 
  			LOG_INFO_F(GL, "Client %d received ClientReplyMsg with seqNum=%"
 			PRIu64
-			" sender=%d  size=%d  primaryId=%d hash=%" PRIu64 "",
-				_clientId, replyMsg->reqSeqNum(), replyMsg->senderId(), replyMsg->size(), (int)replyMsg->currentPrimaryId(), replyMsg->debugHash());
+			" sender=%d  size=%d  primaryId=%d hash=%" PRIu64 " len=%d pendingReqNum=%d",
+				_clientId, replyMsg->reqSeqNum(), replyMsg->senderId(), replyMsg->size(), (int)replyMsg->currentPrimaryId(), replyMsg->debugHash(), replyMsg->replyLength(), pendingRequest->requestSeqNum());
 
-
+                        
 			if (replyMsg->reqSeqNum() != pendingRequest->requestSeqNum())
 			{
 				delete msg;
 				return;
 			}
-
+                       
 			replysCertificate.addMsg(replyMsg, replyMsg->senderId());
 
 			if (replysCertificate.isInconsistent())
@@ -288,6 +291,7 @@ namespace bftEngine
 
 				if (correctReply->replyLength() <= lengthOfReplyBuffer)
 				{
+                                    //Stephen: copys the output to the reply buffer
 					memcpy(replyBuffer, correctReply->replyBuf(), correctReply->replyLength());
 					actualReplyLength = correctReply->replyLength();
 					reset();
