@@ -315,112 +315,122 @@ class SimpleAppState : public RequestsHandler {
         TODO:
         Emulators,
         expects: Mode: emulators, BGID:0/1/2/3, level:0,1,2,3
-        returns: list of ip'ss
+        returns: list of ip's
       */
 
 
     } else {
-      // Our read-write request includes one eight-byte argument, in addition to
-      // the request type.
-      // test_assert(requestSize == 3 * sizeof(uint64_t),
-          // "requestSize != " << 3 * sizeof(uint64_t));
 
+      /* Things left to do,
+        1. Certificate verification
+        2. Emulators,
+        3. Cant have dynamic confiuguratuion so cant do anything about membership service changes currently.
+      */
+      
+      // Invoking Couchdb for modifications in the stored values.
       std::string request_string = parse_char_string(request, requestSize); // Casting char * to string.
-
-      cout << request_string << "2.-----\n";
-      jsonxx::Object p;
-      p.parse(request_string); // Converting our string to json;
-
-      cout << p.json() << "1.-----\n";
+      jsonxx::Object request_json;
+      request_json.parse(request_string); // string to jsonxx object
 
 
-      // Modify the register state.
-      // set_last_state_value(clientId, *pReqVal);
-      // Count the number of times we've modified it.
-      // auto stateNum = get_last_state_num(clientId);
-      // set_last_state_num(clientId, stateNum + 1);
+      /*Update_Quorum_size,
+        expects: BGID, cycle, size, quorum_cert
+        returns: OK
+        Sample: {"Mode": "quorum_size", "BGID":"0", "size":"5", "quorum_cert": "cert" , cycle}
+      */
 
-      // Reply with the number of times we've modified the register.
-      // test_assert(maxReplySize >= sizeof(uint64_t),
-          // "maxReplySize < " << sizeof(uint64_t));
-      // uint64_t* pRet = reinterpret_cast<uint64_t*>(outReply);
-      // *pRet = stateNum;
-      // outActualReplySize = sizeof(uint64_t);
-
-      // st->markUpdate(statePtr, sizeof(State) * numOfClients);
-
-      //-------------------Partial proof commit message ------------------
-      // SeqNumInfo& seqNumInfo = mainLog->get(lastExecutedSeqNum + 1);
-      // PartialProofsSet& pps = seqNumInfo.partialProofs();
-      // LOG_INFO_F(GL, "\nReplica %d - executeRequestsInPrePrepareMsg()===> %d ", (int) myReplicaId, pps.hasFullProof());
-      // if (pps.hasFullProof()) {
-      // FullCommitProofMsg* fcp = pps.getFullProof();
-      // const char* sigBuf = fcp->thresholSignature();
-      // uint16_t sigLen = fcp->thresholSignatureLength();
-      // unsigned char * result = nullptr;
-      // // result = atoh((unsigned char *) sigBuf, sigLen, &result);
-      // LOG_INFO_F(GL, "\nReplica %d - executeRequestsInPrePrepareMsg()===> %s %" PRId64 "", (int) myReplicaId, result, lastExecutedSeqNum + 1);
-      // }
-
-
-      //-----------------------------testing to send JSON back to client ----------------------------
-      // char test[20] = { 'h', 'e', 'l', 'l', 'o', '\0' }; 
-      // char test[] = "hello"; 
       
-      //Iterator for JSONxx
-    //     for(auto kv : o.kv_map())
-    //     {
-    //     // jsonxx::Object obj = kv.first->get<std::string>();
-    // // do stuff here
-    //      std::cout << "yo" <<  kv.first << std::endl;
-    //      std::cout << "yo" <<  *kv.second << std::endl;
-    //     }
+      std::string return_ok = "OK";
+      uint32_t kReplyLength = return_ok.length();
 
-
-      // // std::cout << test << "\n;
-      // //Converting request string to char array;
-      std::string test = "worldhello";
-      const uint32_t kReplyLength = test.length();
-      // char replyBuffer[kReplyLength];
+     
       
-      // for (uint32_t i = 0; i < test.length(); ++i)
-      // {
-      //     replyBuffer[i] = (char) test[i];    // Converting string to char array
-      // }
+      if(request_json.get<jsonxx::String>("Mode") == "quorum_size"){
 
-      // // char* replyBuffer2 =
-      // // reinterpret_cast<char*>(replyBuffer);
-      std::strcpy(outReply, test.c_str());
+          std::string cert = request_json.get<jsonxx::String>("quorum_cert");
+          //if cert is valid then do the following: (how to check?)
 
-      // // outReply = rawRequestBuffer;
-      outActualReplySize = kReplyLength;
 
-      // // char* pRet = reinterpret_cast<char*>(outReply);
-      // // outReply = replyBuffer2;
-
-      // *outReply = *reinterpret_cast<char*>(replyBuffer);
-           // auto lastValue = *reinterpret_cast<char*>(replyBuffer);
-           // *pRet = lastValue;
-      //---- testing end ----------------------------------------------------------------------------
-
-      //Different cases for different API.
-
-      if(p.get<jsonxx::String>("Mode") == "Quorum_Size"){
           wezside::CouchDBXX couch;  // Object for couchdb
-
-          jsonxx::Object body; // JSON object
+          jsonxx::Object body; // JSON object to store modified things
           jsonxx::Object o = couch.doc("global_membership_service","quorum_size"); // Fetch document quorum_size from global_membership_service.
           std::cout << o.json() << std::endl; // Print the data fetched from membership service on the console
 
           body << "_id" << "quorum_size";  //id determines which document to edit
-          body << "_rev" << o.get<string>("_rev"); // rev should match previous rev else the document wont be updated
-          body << "10.0.2.9" << p.get<jsonxx::Array>("ip"); // "key" << "value"
+          body << "_rev" << o.get<string>("_rev"); // rev should match previous rev else the document wont be updated          
+          
+          std::string BGID_tochange = request_json.get<jsonxx::String>("BGID");
+      
+          // o is old data, body is new which we are building, request_json is values which we want to change
+          for(auto kv : o.kv_map()) //iterartor for all values,
+          {
+            if(kv.first != "_id" && kv.first != "_rev" && kv.first != BGID_tochange) // if we dont have to change it then just copy it
+            {
+              // jsonxx::Object sub_json;
+              cout << kv.first << '\n';
+              body << kv.first << o.get<jsonxx::Object>(kv.first); // key/value for that BGID.
+            }
+          }
 
-          // body << "mode" << ;
-          // body << "timestamp" << static_cast<std::ostringstream*>( &(std::ostringstream() << time(NULL)))->str();
+          jsonxx::Object sub_json; // make a sub object to send things
+          sub_json << "size" << request_json.get<jsonxx::String>("size");
+          sub_json << "cycle" << request_json.get<jsonxx::String>("cycle");
+          sub_json << "quorum_cert" << request_json.get<jsonxx::String>("quorum_cert");
+
+          body << BGID_tochange << sub_json;
+
+          cout << body.json();
           o = couch.put("global_membership_service", body); //Sending the JSON document back to couchdb;
-          std::cout << o.json() << std::endl;
+          std::strcpy(outReply, return_ok.c_str());
+          outActualReplySize = kReplyLength;
       }
+
+      /*Update_Public_Keys,
+        expects: BGID and json of all keys + certificate, 
+        returns: OK
+        Sample: {"Mode": "public_keys", "BGID":"0", "keys": {"ip":"key", "ip":"key", "certificate_msp":"certificate"}}
+      */
+      
+      if(request_json.get<jsonxx::String>("Mode") == "public_keys"){
+          std::string cert = request_json.get<jsonxx::Object>("keys").get<jsonxx::String>("certificate_msp");
+          //if cert is valid then do the following: (how to check?)
+
+
+          wezside::CouchDBXX couch;  // Object for couchdb
+          jsonxx::Object body; // JSON object to store modified things
+          jsonxx::Object o = couch.doc("global_membership_service","public_keys"); // Fetch document public_keys from global_membership_service.
+          std::cout << o.json() << std::endl; // Print the data fetched from membership service on the console
+
+          body << "_id" << "public_keys";  //id determines which document to edit
+          body << "_rev" << o.get<string>("_rev"); // rev should match previous rev else the document wont be updated security by couchdb        
+          
+          std::string BGID_tochange = request_json.get<jsonxx::String>("BGID");
+      
+          // o is old data, body is new which we are building, request_json is values which we want to change
+          for(auto kv : o.kv_map())
+          {
+            if(kv.first != "_id" && kv.first != "_rev" && kv.first != BGID_tochange) // if we dont have to change it then just copy it
+            {
+              // jsonxx::Object sub_json;
+              cout << kv.first << '\n';
+              body << kv.first << o.get<jsonxx::Object>(kv.first); // key/value for that BGID.
+            }
+          }
+
+          body << BGID_tochange << request_json.get<jsonxx::Object>("keys");
+
+          cout << body.json();
+          o = couch.put("global_membership_service", body); //Sending the JSON document back to couchdb;
+          std::strcpy(outReply, return_ok.c_str());
+          outActualReplySize = kReplyLength;
+      }
+
+      /*Update emulators,
+        expects: BGID, list of IP's,
+
+
+      */
+
     }
 
     return 0;

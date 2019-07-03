@@ -230,7 +230,8 @@ class GreeterServiceImpl final : public Greeter::Service {
     //concord start
 
       LOG_INFO(clientLogger, "Starting " << cp.numOfOperations);
-      const int readMod = 1;
+      const int readMod = 2; //shift from read to write
+
       SeqNumberGeneratorForClientRequests* pSeqGen =
           SeqNumberGeneratorForClientRequests::
           createSeqNumberGeneratorForClientRequests();
@@ -381,7 +382,7 @@ class GreeterServiceImpl final : public Greeter::Service {
               pReqId++;
           }
           reply->set_message(request_string);
-          LOG_INFO(clientLogger, "Server_output_read" << request_string << actualReplyLength);// << *retVal);
+          LOG_INFO(clientLogger, "Server_output_write" << request_string << actualReplyLength);// << *retVal);
         }
       }
 
