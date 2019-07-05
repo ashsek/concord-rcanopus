@@ -1,8 +1,8 @@
 set(simpleTest_client_source_files
-    helloworld.pb.h
-    helloworld.pb.cc
-    helloworld.grpc.pb.h
-    helloworld.grpc.pb.cc
+    membership.pb.h
+    membership.pb.cc
+    membership.grpc.pb.h
+    membership.grpc.pb.cc
     client.cpp
         ${CONFIG_FOLDER_PATH_VALUE}/test_comm_config.cpp
         ${CONFIG_FOLDER_PATH_VALUE}/config_file_parser.cpp

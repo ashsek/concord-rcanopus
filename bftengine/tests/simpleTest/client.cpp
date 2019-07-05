@@ -52,15 +52,15 @@
 
 #include <grpcpp/grpcpp.h>
 
-#include "helloworld.grpc.pb.h"
+#include "membership.grpc.pb.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
-using helloworld::HelloRequest;
-using helloworld::HelloReply;
-using helloworld::Greeter;
+using membership::request_membership;
+using membership::reply_membership;
+using membership::MemRequest;
 
 //grpc end
 
@@ -200,7 +200,7 @@ bftEngine::SimpleClientParams scp;
 SimpleClient* client;
 
 //grpc execution class and function,
-class GreeterServiceImpl final : public Greeter::Service {
+class membership_service_impl final : public MemRequest::Service {
 
   //to convert chartacter byte stream back to string,
   string parse_char_string(char * request2, uint32_t requestSize2){
@@ -222,28 +222,29 @@ class GreeterServiceImpl final : public Greeter::Service {
 
 
 // grpc request handler, 
-  Status SayHello(ServerContext* context, const HelloRequest* request,
-                  HelloReply* reply) override {
+  Status SayHello(ServerContext* context, const request_membership* request,
+                  reply_membership* reply) override {
     // std::string prefix("Concord");
     
 
     //concord start
 
       LOG_INFO(clientLogger, "Starting " << cp.numOfOperations);
-      const int readMod = 1; //shift from read to write
+      // const int readMod = 1; //shift from read to write
 
       SeqNumberGeneratorForClientRequests* pSeqGen =
-          SeqNumberGeneratorForClientRequests::
+          SeqNumberGeneratorForClientRequests::  
           createSeqNumberGeneratorForClientRequests();
 
-      for (uint32_t i = 1; i <= cp.numOfOperations; i++) {
+      // for (uint32_t i = 1; i <= cp.numOfOperations; i++) {
 
         // // the python script that runs the client needs to know how many
         // // iterations has been done - that's the reason we use printf and not
         // // logging module - to keep the output exactly as we expect.
 
+        int readMode = request->read_only();
 
-        if (i % readMod == 0) {
+        if (readMode) {
           // Read the latest value every readMod-th operation.
 
           // Prepare request parameters.
@@ -386,7 +387,7 @@ class GreeterServiceImpl final : public Greeter::Service {
           reply->set_message(request_string);
           LOG_INFO(clientLogger, "Server_output_write" << request_string << actualReplyLength);// << *retVal);
         }
-      }
+      // }
 
       // After all requests have been issued, stop communication and clean up.
       // comm->Stop();
@@ -409,7 +410,7 @@ int main(int argc, char **argv) {
   parse_params(argc, argv, cp, scp); // parameters for concord 
   // RunServer();
   std::string server_address("0.0.0.0:50051"); // server for grpc
-  GreeterServiceImpl service;
+  membership_service_impl service;
 
   ServerBuilder builder;
   // Listen on the given address without any authentication mechanism.

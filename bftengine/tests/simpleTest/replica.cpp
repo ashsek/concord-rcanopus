@@ -248,6 +248,9 @@ class SimpleAppState : public RequestsHandler {
 
       //Only reading values from couchdb,
       std::string request_string = parse_char_string(request, requestSize);
+
+      cout << "----------->>>>>>>>" << outReply << '\n';
+
       jsonxx::Object request_json;
       request_json.parse(request_string);
 
@@ -406,7 +409,23 @@ class SimpleAppState : public RequestsHandler {
       std::string request_string = parse_char_string(request, requestSize); // Casting char * to string.
       jsonxx::Object request_json;
       request_json.parse(request_string); // string to jsonxx object
+       cout << "----------->>>>>>>>" << outReply << '\n';
+       cout << outActualReplySize << '\n';
 
+       char* pReqId  = outReply;
+          
+          // std::string request_string = parse_char_string(retVal, actualReplyLength);
+          std::string request_string2 = "";
+
+          // char* pReqId = retVal;
+
+          for (uint32_t i = 0; i < outActualReplySize; ++i)
+          {
+              std::string char_request(1, *pReqId); //converting requests from char * back to string.
+              request_string2 +=  char_request;
+              pReqId++;
+          }
+      cout << request_string2 << '\n';
 
       /*Update_Quorum_size,
         expects: BGID, cycle, size, quorum_cert
