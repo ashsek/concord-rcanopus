@@ -1,0 +1,15 @@
+{
+  "_id": "configuration",
+  "max_height": "2",
+  "v_n1": { "parent": "v_n3", "children": ["0","1","2","3"]},
+  "v_n2": { "parent": "v_n3", "children": ["4","5","6","7"]},
+  "v_n3": { "parent": "", "children": ["v_n2","v_n1"]},
+  "0": {"parent": "v_n1", "children":[]},
+  "1": {"parent": "v_n1", "children":[]},
+  "2": {"parent": "v_n1", "children":[]},
+  "3": {"parent": "v_n1", "children":[]},
+  "4": {"parent": "v_n2", "children":[]},
+  "5": {"parent": "v_n2", "children":[]},
+  "6": {"parent": "v_n2", "children":[]},
+  "7": {"parent": "v_n2", "children":[]}
+}

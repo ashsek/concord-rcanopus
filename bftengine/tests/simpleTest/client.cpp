@@ -230,7 +230,7 @@ class GreeterServiceImpl final : public Greeter::Service {
     //concord start
 
       LOG_INFO(clientLogger, "Starting " << cp.numOfOperations);
-      const int readMod = 2; //shift from read to write
+      const int readMod = 1; //shift from read to write
 
       SeqNumberGeneratorForClientRequests* pSeqGen =
           SeqNumberGeneratorForClientRequests::
@@ -250,6 +250,8 @@ class GreeterServiceImpl final : public Greeter::Service {
           const bool readOnly = true;
           
           std::string test = request->name();
+
+          cout << test << '\n';
           //Converting request string to char array;
           const uint32_t kRequestLength = test.length();
           char requestBuffer[kRequestLength];

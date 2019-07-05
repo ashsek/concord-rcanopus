@@ -24,3 +24,7 @@ curl -X POST http://127.0.0.1:5984/global_membership_service -d @- -# -o output 
 echo "Quorum_size"
 
 curl -X POST http://127.0.0.1:5984/global_membership_service -d @- -# -o output -H "Content-Type: application/json" < quorum_size.json
+
+echo "configuration"
+
+curl -X POST http://127.0.0.1:5984/global_membership_service -d @- -# -o output -H "Content-Type: application/json" < configuration.json

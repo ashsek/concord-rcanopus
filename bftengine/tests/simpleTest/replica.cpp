@@ -54,6 +54,7 @@
 #include <thread>
 #include <csignal>
 #include <cstring>
+#include <queue>
 
 // bftEngine includes
 #include "CommFactory.hpp"
@@ -251,6 +252,7 @@ class SimpleAppState : public RequestsHandler {
       request_json.parse(request_string);
 
    
+      cout << request_json.json() << '\n';
       /*
        Public keys,
        expects: Mode: public_key, BGID: 0/1/2/3....
@@ -314,10 +316,83 @@ class SimpleAppState : public RequestsHandler {
       /*
         TODO:
         Emulators,
-        expects: Mode: emulators, BGID:0/1/2/3, level:0,1,2,3
-        returns: list of ip's
+        expects: Mode: emulators, BGID:0/1/2/3, level or height:0,1,2,3
+        returns: 
       */
+      if(request_json.get<jsonxx::String>("Mode") == "emulators"){ 
+          wezside::CouchDBXX couch;
 
+          jsonxx::Object topology = couch.doc("global_membership_service","configuration"); // fetch network topology
+          jsonxx::Object emulators = couch.doc("global_membership_service","emulators"); //fetch list of emulators for each byzantine group
+          // cout <<  topology.json() << '\n';
+
+          string BGID = request_json.get<jsonxx::String>("BGID");
+          string height = request_json.get<jsonxx::String>("height");
+
+          string reply_json;
+
+          if(height > topology.get<string>("max_height")){
+              std::string err =  "Error height is greater than max height";
+              const uint32_t kReplyLength = err.length();
+              std::strcpy(outReply, err.c_str()); //reply with error
+              outActualReplySize = kReplyLength;
+          }
+          else{
+              
+              int height2 = atoi(height.c_str());
+
+              if(height2 == 0){
+                  reply_json = emulators.get<jsonxx::Object>(BGID).json();
+                  const uint32_t kReplyLength = reply_json.length();
+                  std::strcpy(outReply, reply_json.c_str());
+                  outActualReplySize = kReplyLength;
+              }
+              else{
+                  string parent = BGID;
+                  while(height2){ //finding the node at that height relative to our given node.
+                      parent = topology.get<jsonxx::Object>(parent).get<string>("parent");
+                      height2--; 
+                  }
+                  // Create a queue for BFS
+                  queue<string> queue;
+                
+                  // Push the root node for that sub-tree. 
+                  queue.push(parent);
+                
+                  while (true) // automatically breaking further when it realises that only leaf nodes are left. 
+                  { 
+                      // Pop a vertex from stack and print it 
+                      parent = queue.front();
+                      cout << parent << '\n';
+                      if(topology.get<jsonxx::Object>(parent).get<jsonxx::Array>("children").has<string>(0)){
+                          queue.pop();
+                          int i = 0;
+                          while(topology.get<jsonxx::Object>(parent).get<jsonxx::Array>("children").has<string>(i)){
+                              queue.push(topology.get<jsonxx::Object>(parent).get<jsonxx::Array>("children").get<string>(i));
+                              i++;
+                              // cout << queue.front() << '\n';
+                          }
+                      }
+                      else{
+                          break;
+                      }
+                  }
+                  // cout << "queue\n";
+
+                  jsonxx::Object sub_json;
+                  while(!queue.empty()){
+                      sub_json << queue.front() << emulators.get<jsonxx::Object>(queue.front());
+                      // cout << queue.front() << '\n';
+                      queue.pop();
+                  } 
+                  reply_json = sub_json.json();
+                  const uint32_t kReplyLength = reply_json.length();
+                  std::strcpy(outReply, reply_json.c_str());
+                  outActualReplySize = kReplyLength;
+              }
+          }
+          // std::strcpy(outReply, reply_json.c_str());
+      }
 
     } else {
 
@@ -342,7 +417,7 @@ class SimpleAppState : public RequestsHandler {
       
       std::string return_ok = "OK";
       uint32_t kReplyLength = return_ok.length();
-
+ 
      
       
       if(request_json.get<jsonxx::String>("Mode") == "quorum_size"){
@@ -425,10 +500,9 @@ class SimpleAppState : public RequestsHandler {
           outActualReplySize = kReplyLength;
       }
 
+      // Should make use of configuration file.
       /*Update emulators,
-        expects: BGID, list of IP's,
-
-
+        expects: BGID, list of IP's.
       */
 
     }
