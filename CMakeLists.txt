@@ -27,7 +27,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Default USE_LOG4CPP to FALSE
-option(USE_LOG4CPP "Enable LOG4CPP" TRUE)
+option(USE_LOG4CPP "Enable LOG4CPP" FALSE)
 
 # Default BUILD_COMM_TCP_PLAIN to FALSE
 option(BUILD_COMM_TCP_PLAIN "Enable TCP communication" FALSE)

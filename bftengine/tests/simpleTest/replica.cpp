@@ -249,8 +249,6 @@ class SimpleAppState : public RequestsHandler {
       //Only reading values from couchdb,
       std::string request_string = parse_char_string(request, requestSize);
 
-      cout << "----------->>>>>>>>" << outReply << '\n';
-
       jsonxx::Object request_json;
       request_json.parse(request_string);
 
@@ -299,7 +297,7 @@ class SimpleAppState : public RequestsHandler {
       /*
        Byzantine_groups,
        expects: Mode: byzantine_groups, BGID: 0/1/2/3....
-       returns: json of leader's ip + global quorum certificate
+       returns: leader ip + global quorum certificate
       */
       if(request_json.get<jsonxx::String>("Mode") == "byzantine_groups"){
         wezside::CouchDBXX couch;  // Object for couchdb
@@ -317,10 +315,9 @@ class SimpleAppState : public RequestsHandler {
       }
 
       /*
-        TODO:
         Emulators,
         expects: Mode: emulators, BGID:0/1/2/3, level or height:0,1,2,3
-        returns: 
+        returns: json of all BGID's for that virtual node along with IP addresses of their emulators
       */
       if(request_json.get<jsonxx::String>("Mode") == "emulators"){ 
           wezside::CouchDBXX couch;
@@ -362,9 +359,9 @@ class SimpleAppState : public RequestsHandler {
                   // Push the root node for that sub-tree. 
                   queue.push(parent);
                 
-                  while (true) // automatically breaking further when it realises that only leaf nodes are left. 
+                  while (!queue.empty()) // automatically breaks when it realises that only leaf nodes are left. 
                   { 
-                      // Pop a vertex from stack and print it 
+                      // using a queue for a level order traversal (get all emulators at once)
                       parent = queue.front();
                       cout << parent << '\n';
                       if(topology.get<jsonxx::Object>(parent).get<jsonxx::Array>("children").has<string>(0)){
@@ -373,19 +370,16 @@ class SimpleAppState : public RequestsHandler {
                           while(topology.get<jsonxx::Object>(parent).get<jsonxx::Array>("children").has<string>(i)){
                               queue.push(topology.get<jsonxx::Object>(parent).get<jsonxx::Array>("children").get<string>(i));
                               i++;
-                              // cout << queue.front() << '\n';
                           }
                       }
                       else{
                           break;
                       }
                   }
-                  // cout << "queue\n";
 
                   jsonxx::Object sub_json;
                   while(!queue.empty()){
-                      sub_json << queue.front() << emulators.get<jsonxx::Object>(queue.front());
-                      // cout << queue.front() << '\n';
+                      sub_json << queue.front() << emulators.get<jsonxx::Object>(queue.front()); // making a json of BGID + their emulators for a v_node.
                       queue.pop();
                   } 
                   reply_json = sub_json.json();
@@ -394,38 +388,37 @@ class SimpleAppState : public RequestsHandler {
                   outActualReplySize = kReplyLength;
               }
           }
-          // std::strcpy(outReply, reply_json.c_str());
       }
 
     } else {
 
       /* Things left to do,
         1. Certificate verification
-        2. Emulators,
-        3. Cant have dynamic confiuguratuion so cant do anything about membership service changes currently.
+        2. Cant have dynamic confiuguratuion so cant do anything about membership service changes currently.
       */
       
       // Invoking Couchdb for modifications in the stored values.
       std::string request_string = parse_char_string(request, requestSize); // Casting char * to string.
       jsonxx::Object request_json;
       request_json.parse(request_string); // string to jsonxx object
-       cout << "----------->>>>>>>>" << outReply << '\n';
-       cout << outActualReplySize << '\n';
+
+       // cout << "----------->>>>>>>>" << outReply << '\n';
+       // cout << outActualReplySize << '\n';
 
        char* pReqId  = outReply;
           
-          // std::string request_string = parse_char_string(retVal, actualReplyLength);
-          std::string request_string2 = "";
+      // std::string request_string = parse_char_string(retVal, actualReplyLength);
+      std::string full_commit_proof_message = "";
 
-          // char* pReqId = retVal;
+      // char* pReqId = retVal;
 
-          for (uint32_t i = 0; i < outActualReplySize; ++i)
-          {
-              std::string char_request(1, *pReqId); //converting requests from char * back to string.
-              request_string2 +=  char_request;
-              pReqId++;
-          }
-      cout << request_string2 << '\n';
+      for (uint32_t i = 0; i < outActualReplySize; ++i)
+      {
+          std::string char_request(1, *pReqId); //converting requests from char * back to string.
+          full_commit_proof_message +=  char_request;
+          pReqId++;
+      }
+      cout << full_commit_proof_message << '\n';
 
       /*Update_Quorum_size,
         expects: BGID, cycle, size, quorum_cert
@@ -433,11 +426,14 @@ class SimpleAppState : public RequestsHandler {
         Sample: {"Mode": "quorum_size", "BGID":"0", "size":"5", "quorum_cert": "cert" , cycle}
       */
 
-      
-      std::string return_ok = "OK";
-      uint32_t kReplyLength = return_ok.length();
- 
+      jsonxx::Object reply_msg_object;
+      reply_msg_object << "Status" << "OK";
+      reply_msg_object << "Global_Cert" << full_commit_proof_message;
+      // std::string return_ok = "OK";
+      std::string reply_msg_json = reply_msg_object.json(); 
+      uint32_t kReplyLength = reply_msg_json.length();
      
+      cout << reply_msg_json << '\n';
       
       if(request_json.get<jsonxx::String>("Mode") == "quorum_size"){
 
@@ -475,7 +471,7 @@ class SimpleAppState : public RequestsHandler {
 
           cout << body.json();
           o = couch.put("global_membership_service", body); //Sending the JSON document back to couchdb;
-          std::strcpy(outReply, return_ok.c_str());
+          std::strcpy(outReply, reply_msg_json.c_str());
           outActualReplySize = kReplyLength;
       }
 
@@ -515,17 +511,92 @@ class SimpleAppState : public RequestsHandler {
 
           cout << body.json();
           o = couch.put("global_membership_service", body); //Sending the JSON document back to couchdb;
-          std::strcpy(outReply, return_ok.c_str());
+          std::strcpy(outReply, reply_msg_json.c_str());
           outActualReplySize = kReplyLength;
       }
 
-      // Should make use of configuration file.
+      /* Update leader Ip,
+         expects: BGID, Ip address.
+      */
+      if(request_json.get<jsonxx::String>("Mode") == "byzantine_groups"){
+
+
+          wezside::CouchDBXX couch;  // Object for couchdb
+          jsonxx::Object body; // JSON object to store modified things
+          jsonxx::Object o = couch.doc("global_membership_service","byzantine_groups"); // Fetch document byzantine_groups from global_membership_service.
+          std::cout << o.json() << std::endl; // Print the data fetched from membership service on the console
+
+          body << "_id" << "byzantine_groups";  //id determines which document to edit
+          body << "_rev" << o.get<string>("_rev"); // rev should match previous rev else the document wont be updated (security feature by couchdb)        
+          
+          std::string BGID_tochange = request_json.get<jsonxx::String>("BGID");
+      
+          // o is old data, body is new which we are building, request_json is values which we want to change
+          for(auto kv : o.kv_map())
+          {
+            if(kv.first != "_id" && kv.first != "_rev" && kv.first != BGID_tochange) // if we dont have to change it then just copy it
+            {
+              // jsonxx::Object sub_json;
+              cout << kv.first << '\n';
+              body << kv.first << o.get<jsonxx::Object>(kv.first); // key/value for that BGID.
+            }
+          }
+
+          jsonxx::Object sub_json;
+          sub_json << "leader_ip" << request_json.get<jsonxx::String>("IP");
+          sub_json << "cert" << full_commit_proof_message; //global quorum certificate. 
+
+          body << BGID_tochange << sub_json;
+
+          cout << body.json();
+          o = couch.put("global_membership_service", body); //Sending the JSON document back to couchdb;
+          std::strcpy(outReply, reply_msg_json.c_str());
+          outActualReplySize = kReplyLength;
+      }
+
       /*Update emulators,
-        expects: BGID, list of IP's.
+        expects: BGID, list of IP's, cert's.
+        sample: {BGID: "0", "ip": ["131","1231"], "cert": "dasdasd"}
       */
 
-    }
+      if(request_json.get<jsonxx::String>("Mode") == "emulators"){
+          std::string cert = request_json.get<jsonxx::String>("cert");
+          //if cert is valid then do the following: (how to check?)
 
+
+          wezside::CouchDBXX couch;  // Object for couchdb
+          jsonxx::Object body; // JSON object to store modified things
+          jsonxx::Object o = couch.doc("global_membership_service","emulators"); // Fetch document byzantine_groups from global_membership_service.
+          std::cout << o.json() << std::endl; // Print the data fetched from membership service on the console
+
+          body << "_id" << "emulators";  //id determines which document to edit
+          body << "_rev" << o.get<string>("_rev"); // rev should match previous rev else the document wont be updated (security feature by couchdb)        
+          
+          std::string BGID_tochange = request_json.get<jsonxx::String>("BGID");
+      
+          // o is old data, body is new which we are building, request_json is values which we want to change
+          for(auto kv : o.kv_map())
+          {
+            if(kv.first != "_id" && kv.first != "_rev" && kv.first != BGID_tochange) // if we dont have to change it then just copy it
+            {
+              // jsonxx::Object sub_json;
+              cout << kv.first << '\n';
+              body << kv.first << o.get<jsonxx::Object>(kv.first); // key/value for that BGID.
+            }
+          }
+
+          jsonxx::Object sub_json;
+          sub_json << "ip" << request_json.get<jsonxx::Array>("ip");
+          sub_json << "cert" << request_json.get<jsonxx::String>("cert"); 
+
+          body << BGID_tochange << sub_json;
+
+          cout << body.json();
+          o = couch.put("global_membership_service", body); //Sending the JSON document back to couchdb;
+          std::strcpy(outReply, reply_msg_json.c_str());
+          outActualReplySize = kReplyLength;
+      }
+    }
     return 0;
   }
 

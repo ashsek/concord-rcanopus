@@ -22,37 +22,44 @@ package main
 import (
 	"context"
 	"log"
-	"os"
+	"fmt"
 	"time"
 
 	"google.golang.org/grpc"
-	pb "helloworld/helloworld"
+	pb "google.golang.org/grpc/examples/go_client/membership"
 )
 
 const (
 	address     = "localhost:50051"
-	defaultName = "yolo"
 )
 
 func main() {
+	start := time.Now()
+
 	// Set up a connection to the server.
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
-	c := pb.NewGreeterClient(conn)
+	c := pb.NewMemRequestClient(conn)
 
-	// Contact the server and print out its response.
-	name := defaultName
-	if len(os.Args) > 1 {
-		name = os.Args[1]
+	const read int32 = 1 // set 1 for ReadOnly else set 0 for update requests.
+
+	//Read only,
+    request_membership1 := [5]string{`{"Mode": "public_keys", "BGID": "0"}`, `{"Mode": "quorum_size", "BGID": "0"}`, `{"Mode": "byzantine_groups", "BGID": "0"}`, `{"Mode": "emulators", "BGID": "0", "height":"2"}`, `{"Mode": "emulators", "BGID": "4", "height":"1"}`}
+
+	for i := 0; i < 5; i++ {
+		// sum += i
+	    fmt.Println("\n----- Request : ", request_membership1[i])
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		r, err := c.SayHello(ctx, &pb.RequestMembership{Name: request_membership1[i], ReadOnly: read})
+		if err != nil {
+			log.Fatalf("could not connect: %v", err)
+		}
+		fmt.Println("\n", r.Message)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: name})
-	if err != nil {
-		log.Fatalf("could not greet: %v", err)
-	}
-	log.Printf("Greeting: %s", r.Message)
+	elapsed := time.Since(start)
+	fmt.Println("Time taken: ",elapsed)
 }

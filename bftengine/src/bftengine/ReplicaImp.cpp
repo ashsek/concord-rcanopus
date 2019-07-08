@@ -2832,8 +2832,8 @@ namespace bftEngine {
                 uint32_t actualReplyLength = 0;
                 
                 //Send the sigBuf as replyBuffer. Instead of modifying the clientReplyMsg struct, the outputReply can contain the signature as well as the output
-                actualReplyLength = sigLen;
-                memcpy(replyBuffer, sigBuf, sigLen);
+                actualReplyLength = sigLen*2;
+                memcpy(replyBuffer, result, sigLen*2);
                 //Done
                 
                 //Stephen:: the up call implemented by the app

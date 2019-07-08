@@ -357,7 +357,7 @@ class membership_service_impl final : public MemRequest::Service {
 
           const uint64_t timeout = SimpleClient::INFINITE_TIMEOUT;
 
-          const uint32_t kReplyBufferLength = 100;
+          const uint32_t kReplyBufferLength = 1000000;
           
           char rawReplyBuffer[kReplyBufferLength];
  
