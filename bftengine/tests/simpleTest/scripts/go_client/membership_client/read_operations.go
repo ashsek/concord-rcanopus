@@ -47,9 +47,14 @@ func main() {
 	const read int32 = 1 // set 1 for ReadOnly else set 0 for update requests.
 
 	//Read only,
-    request_membership1 := [5]string{`{"Mode": "public_keys", "BGID": "0"}`, `{"Mode": "quorum_size", "BGID": "0"}`, `{"Mode": "byzantine_groups", "BGID": "0"}`, `{"Mode": "emulators", "BGID": "0", "height":"2"}`, `{"Mode": "emulators", "BGID": "4", "height":"1"}`}
+    request_membership1 := [6]string{`{"Mode": "public_keys", "BGID": "0"}`,
+    								 `{"Mode": "quorum_size", "BGID": "0"}`,
+    								  `{"Mode": "byzantine_groups", "BGID": "0"}`,
+    								   `{"Mode": "emulators", "SLID": "0", "height":"2"}`,
+    								    `{"Mode": "emulators", "SLID": "4", "height":"1"}`,
+    								    `{"Mode": "super_leafs", "SLID": "0"}`}
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 6; i++ {
 		// sum += i
 	    fmt.Println("\n----- Request : ", request_membership1[i])
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)

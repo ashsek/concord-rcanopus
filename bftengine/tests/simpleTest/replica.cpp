@@ -315,9 +315,28 @@ class SimpleAppState : public RequestsHandler {
       }
 
       /*
+       Super_leafs,
+       expects: Mode: super_leafs, SLID: 0/1/2/3....
+       returns: monitor ip + global quorum certificate
+      */
+      if(request_json.get<jsonxx::String>("Mode") == "super_leafs"){
+        wezside::CouchDBXX couch;  // Object for couchdb
+
+        jsonxx::Object body; // JSON object
+        jsonxx::Object o = couch.doc("global_membership_service","super_leafs"); // fetch document public key from couchdb
+        // cout << o.get<jsonxx::Object>(request_json.get<string>("BGID")).json() << '\n';
+
+        string reply_json = o.get<jsonxx::Object>(request_json.get<string>("SLID")).json();
+        // std::string test = "worldhello";
+        const uint32_t kReplyLength = reply_json.length();
+        
+        std::strcpy(outReply, reply_json.c_str());
+        outActualReplySize = kReplyLength;
+      }
+      /*
         Emulators,
-        expects: Mode: emulators, BGID:0/1/2/3, level or height:0,1,2,3
-        returns: json of all BGID's for that virtual node along with IP addresses of their emulators
+        expects: Mode: emulators, SLID:0/1/2/3, level or height:0,1,2,3
+        returns: json of all SLID's for that virtual node along with IP addresses of their emulators
       */
       if(request_json.get<jsonxx::String>("Mode") == "emulators"){ 
           wezside::CouchDBXX couch;
@@ -326,7 +345,7 @@ class SimpleAppState : public RequestsHandler {
           jsonxx::Object emulators = couch.doc("global_membership_service","emulators"); //fetch list of emulators for each byzantine group
           // cout <<  topology.json() << '\n';
 
-          string BGID = request_json.get<jsonxx::String>("BGID");
+          string SLID = request_json.get<jsonxx::String>("SLID");
           string height = request_json.get<jsonxx::String>("height");
 
           string reply_json;
@@ -342,13 +361,13 @@ class SimpleAppState : public RequestsHandler {
               int height2 = atoi(height.c_str());
 
               if(height2 == 0){
-                  reply_json = emulators.get<jsonxx::Object>(BGID).json();
+                  reply_json = emulators.get<jsonxx::Object>(SLID).json();
                   const uint32_t kReplyLength = reply_json.length();
                   std::strcpy(outReply, reply_json.c_str());
                   outActualReplySize = kReplyLength;
               }
               else{
-                  string parent = BGID;
+                  string parent = SLID;
                   while(height2){ //finding the node at that height relative to our given node.
                       parent = topology.get<jsonxx::Object>(parent).get<string>("parent");
                       height2--; 
@@ -379,7 +398,8 @@ class SimpleAppState : public RequestsHandler {
 
                   jsonxx::Object sub_json;
                   while(!queue.empty()){
-                      sub_json << queue.front() << emulators.get<jsonxx::Object>(queue.front()); // making a json of BGID + their emulators for a v_node.
+                      if(queue.front() != SLID)
+                          sub_json << queue.front() << emulators.get<jsonxx::Object>(queue.front()); // making a json of BGID + their emulators for a v_node.
                       queue.pop();
                   } 
                   reply_json = sub_json.json();
@@ -554,6 +574,46 @@ class SimpleAppState : public RequestsHandler {
           outActualReplySize = kReplyLength;
       }
 
+
+      /* Update Monitor Ip,
+         expects: SLID, Ip address:port.
+      */
+      if(request_json.get<jsonxx::String>("Mode") == "super_leafs"){
+
+
+          wezside::CouchDBXX couch;  // Object for couchdb
+          jsonxx::Object body; // JSON object to store modified things
+          jsonxx::Object o = couch.doc("global_membership_service","super_leafs"); // Fetch document byzantine_groups from global_membership_service.
+          std::cout << o.json() << std::endl; // Print the data fetched from membership service on the console
+
+          body << "_id" << "super_leafs";  //id determines which document to edit
+          body << "_rev" << o.get<string>("_rev"); // rev should match previous rev else the document wont be updated (security feature by couchdb)        
+          
+          std::string SLID_tochange = request_json.get<jsonxx::String>("SLID");
+      
+          // o is old data, body is new which we are building, request_json is values which we want to change
+          for(auto kv : o.kv_map())
+          {
+            if(kv.first != "_id" && kv.first != "_rev" && kv.first != SLID_tochange) // if we dont have to change it then just copy it
+            {
+              // jsonxx::Object sub_json;
+              cout << kv.first << '\n';
+              body << kv.first << o.get<jsonxx::Object>(kv.first); // key/value for that BGID.
+            }
+          }
+
+          jsonxx::Object sub_json;
+          sub_json << "monitor_ip" << request_json.get<jsonxx::String>("IP");
+          sub_json << "cert" << full_commit_proof_message; //global quorum certificate.
+
+          body << SLID_tochange << sub_json;
+
+          cout << body.json();
+          o = couch.put("global_membership_service", body); //Sending the JSON document back to couchdb;
+          std::strcpy(outReply, reply_msg_json.c_str());
+          outActualReplySize = kReplyLength;
+      }
+
       /*Update emulators,
         expects: BGID, list of IP's, cert's.
         sample: {BGID: "0", "ip": ["131","1231"], "cert": "dasdasd"}
@@ -572,12 +632,12 @@ class SimpleAppState : public RequestsHandler {
           body << "_id" << "emulators";  //id determines which document to edit
           body << "_rev" << o.get<string>("_rev"); // rev should match previous rev else the document wont be updated (security feature by couchdb)        
           
-          std::string BGID_tochange = request_json.get<jsonxx::String>("BGID");
+          std::string SLID_tochange = request_json.get<jsonxx::String>("SLID");
       
           // o is old data, body is new which we are building, request_json is values which we want to change
           for(auto kv : o.kv_map())
           {
-            if(kv.first != "_id" && kv.first != "_rev" && kv.first != BGID_tochange) // if we dont have to change it then just copy it
+            if(kv.first != "_id" && kv.first != "_rev" && kv.first != SLID_tochange) // if we dont have to change it then just copy it
             {
               // jsonxx::Object sub_json;
               cout << kv.first << '\n';
@@ -589,7 +649,7 @@ class SimpleAppState : public RequestsHandler {
           sub_json << "ip" << request_json.get<jsonxx::Array>("ip");
           sub_json << "cert" << request_json.get<jsonxx::String>("cert"); 
 
-          body << BGID_tochange << sub_json;
+          body << SLID_tochange << sub_json;
 
           cout << body.json();
           o = couch.put("global_membership_service", body); //Sending the JSON document back to couchdb;

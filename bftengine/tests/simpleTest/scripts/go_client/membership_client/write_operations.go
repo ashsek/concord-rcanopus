@@ -46,12 +46,13 @@ func main() {
 
 	const read int32 = 0 // set 1 for ReadOnly else set 0 for update requests.
 
-    request_membership1 := [4]string{`{"Mode": "quorum_size", "BGID":"0", "size":"6", "quorum_cert": "cert" , "cycle":"3"}`, 
-    								`{"Mode": "public_keys", "BGID":"0", "keys": {"10.0.2.5": "edfGTS0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCzGP8PMAQZVWeUI4g2mGliU342npkRa2yuNFIhHWYS2UBfB76U5tIevPKZhUs3hzhURBe8eLBNh0d1LYdYToTpAmcX8MfUzxhTfbsXwvoE4JITqaC5Z92MAP0p4LWXi24CuQ89dOHEKsdzIP8GSF+BDwQAB", "10.0.2.6": "BHYGFR0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCzGP8PMAQZVWeUI4g2mGliU3WYS2UBfB76U5tIevPKZhUs3hzhURBe8eLBNh0d1LYdYToTpAmcX8MfUzxhTfbsXwvoE4JITqaC5Z92MAP0p4LWXi24CuQYjv0ryhlft1MQ89dOHEKsdzIP8GSF+BDwIDAQAB", "certificate_msp":"certificate"}}`,
-     								`{"Mode": "byzantine_groups", "BGID": "0", "IP": "10.0.2.3"}`,
-     								`{"Mode": "emulators", "BGID": "0", "ip": ["10.0.2.3","10.0.3.4", "10.0.2.21"], "cert": "fhndslkfbasjf1212938nsdlnnlksskjjskjkffkfj121212nfksdnmnkl"}`}
+    request_membership1 := [5]string{`{"Mode": "quorum_size", "BGID":"0", "size":"6", "quorum_cert": "cert" , "cycle":"3"}`, 
+    								`{"Mode": "public_keys", "BGID":"0", "keys": {"10.0.1.4:3710": "edfGTS0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCzGP8PMAQZVWeUI4g2mGliU342npkRa2yuNFIhHWYS2UBfB76U5tIevPKZhUs3hzhURBe8eLBNh0d1LYdYToTpAmcX8MfUzxhTfbsXwvoE4JITqaC5Z92MAP0p4LWXi24CuQ89dOHEKsdzIP8GSF+BDwQAB", "10.0.2.6:3712": "BHYGFR0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCzGP8PMAQZVWeUI4g2mGliU3WYS2UBfB76U5tIevPKZhUs3hzhURBe8eLBNh0d1LYdYToTpAmcX8MfUzxhTfbsXwvoE4JITqaC5Z92MAP0p4LWXi24CuQYjv0ryhlft1MQ89dOHEKsdzIP8GSF+BDwIDAQAB", "certificate_msp":"certificate"}}`,
+     								`{"Mode": "byzantine_groups", "BGID": "0", "IP": "10.0.2.3:4561"}`,
+     								`{"Mode": "emulators", "SLID": "0", "ip": ["10.0.1.4:3710","10.0.3.4:1234", "10.0.2.21:3456"], "cert": "cert"}`,
+     								`{"Mode": "super_leafs", "SLID": "0", "IP": "10.0.0.1:4561", "cert":"cert"}`}
 
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 5; i++ {
 		// sum += i
 	    fmt.Println("\n----- Request : ", request_membership1[i])
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)

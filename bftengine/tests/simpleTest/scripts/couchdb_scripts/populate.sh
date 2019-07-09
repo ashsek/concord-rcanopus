@@ -28,3 +28,7 @@ curl -X POST http://127.0.0.1:5984/global_membership_service -d @- -# -o output 
 echo "configuration"
 
 curl -X POST http://127.0.0.1:5984/global_membership_service -d @- -# -o output -H "Content-Type: application/json" < configuration.json
+
+echo "Superleaf"
+
+curl -X POST http://127.0.0.1:5984/global_membership_service -d @- -# -o output -H "Content-Type: application/json" < super_leafs.json

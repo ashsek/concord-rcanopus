@@ -59,7 +59,7 @@ echo "______________________________________________"
 
 cd
 wget https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz
-tar -C /usr/local -xzf go1.12.6.linux-amd64.tar.gz
+sudo tar -C /usr/local -xzf go1.12.6.linux-amd64.tar.gz
 export PATH=$PATH:/usr/local/go/bin
 
 echo "______________________________________________"
@@ -78,7 +78,19 @@ git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc
 cd grpc
 git submodule update --init
 CXXFLAGS='-Wno-error' make
-make install
+sudo make install
+
+echo "______________________________________________"
+echo "=============Log4Cplusplus============"
+echo "______________________________________________"
+cd
+git clone https://github.com/log4cplus/log4cplus.git
+cd log4cplus
+git checkout REL_1_2_1
+./configure CXXFLAGS="--std=c++11"
+make
+sudo make install
+
 
 echo "______________________________________________"
 echo "============ Concord-RCanopus     ============"

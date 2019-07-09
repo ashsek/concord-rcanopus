@@ -1,7 +1,5 @@
 {
   "_id": "quorum_size",
   "0": {"size":"4", "cycle": "5" , "quorum_cert": "cert"},
-  "1": {"size":"4", "cycle": "5" , "quorum_cert": "cert"},
-  "2": {"size":"4", "cycle": "5" , "quorum_cert": "cert"},
-  "3": {"size":"4", "cycle": "5" , "quorum_cert": "cert"}
+  "1": {"size":"3", "cycle": "4" , "quorum_cert": "cert"}
 }
