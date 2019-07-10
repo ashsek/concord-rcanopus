@@ -368,7 +368,9 @@ class SimpleAppState : public RequestsHandler {
               }
               else{
                   string parent = SLID;
+                  string parent_to_exclude;
                   while(height2){ //finding the node at that height relative to our given node.
+                      parent_to_exclude = parent;
                       parent = topology.get<jsonxx::Object>(parent).get<string>("parent");
                       height2--; 
                   }
@@ -387,7 +389,8 @@ class SimpleAppState : public RequestsHandler {
                           queue.pop();
                           int i = 0;
                           while(topology.get<jsonxx::Object>(parent).get<jsonxx::Array>("children").has<string>(i)){
-                              queue.push(topology.get<jsonxx::Object>(parent).get<jsonxx::Array>("children").get<string>(i));
+                              if(topology.get<jsonxx::Object>(parent).get<jsonxx::Array>("children").get<string>(i) != parent_to_exclude)
+                                queue.push(topology.get<jsonxx::Object>(parent).get<jsonxx::Array>("children").get<string>(i));
                               i++;
                           }
                       }
