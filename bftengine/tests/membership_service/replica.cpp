@@ -182,32 +182,8 @@ void parse_params(int argc, char** argv) {
 
 }
 
-// The replica state machine.
+// Handler for requests
 class SimpleAppState : public RequestsHandler {
- private:
-  uint64_t client_to_index(NodeNum clientId) {
-    return clientId - numOfReplicas;
-  }
-
-  uint64_t get_last_state_value(NodeNum clientId) {
-    auto index = client_to_index(clientId);
-    return statePtr[index].lastValue;
-  }
-
-  uint64_t get_last_state_num(NodeNum clientId) {
-    auto index = client_to_index(clientId);
-    return statePtr[index].stateNum;
-  }
-
-  void set_last_state_value(NodeNum clientId, uint64_t value) {
-    auto index = client_to_index(clientId);
-    statePtr[index].lastValue = value;
-  }
-
-  void set_last_state_num(NodeNum clientId, uint64_t value) {
-    auto index = client_to_index(clientId);
-    statePtr[index].stateNum = value;
-  }
 
  public:
 
@@ -384,7 +360,7 @@ class SimpleAppState : public RequestsHandler {
                   { 
                       // using a queue for a level order traversal (get all emulators at once)
                       parent = queue.front();
-                      cout << parent << '\n';
+                      // cout << parent << '\n';
                       if(topology.get<jsonxx::Object>(parent).get<jsonxx::Array>("children").has<string>(0)){
                           queue.pop();
                           int i = 0;
@@ -398,14 +374,38 @@ class SimpleAppState : public RequestsHandler {
                           break;
                       }
                   }
+                  // At this stage the queue contains only the children.
+                  jsonxx::Object final_json; // to store final value
+                  jsonxx::Object empty_object; // for reference
+                  jsonxx::Object sub_json; 
+                  
+                  string pare = topology.get<jsonxx::Object>(queue.front()).get<string>("parent"); // aggregating nodes acc. to their parents  
+                  bool diff_parents = 0;
 
-                  jsonxx::Object sub_json;
                   while(!queue.empty()){
-                      if(queue.front() != SLID)
-                          sub_json << queue.front() << emulators.get<jsonxx::Object>(queue.front()); // making a json of BGID + their emulators for a v_node.
+                      
+                      if(pare == topology.get<jsonxx::Object>(queue.front()).get<string>("parent")){ // separating parent wise
+                        if(queue.front() != SLID){
+                            sub_json << queue.front() << emulators.get<jsonxx::Object>(queue.front()); // making a json of BGID + their emulators for a v_node.
+                        }
+                      }
+  
+                      else{
+                        diff_parents = 1;
+                        final_json << pare << sub_json; // a new json which stores acc to byzantine groups
+                        cout << final_json << '\n';
+                        sub_json = empty_object;
+                        pare = topology.get<jsonxx::Object>(queue.front()).get<string>("parent"); // loop needs to continue
+                        sub_json << queue.front() << emulators.get<jsonxx::Object>(queue.front());
+                      }
+
                       queue.pop();
                   } 
-                  reply_json = sub_json.json();
+                  if(!diff_parents){
+                        final_json << pare << sub_json; // if the nodes dont have different parents, include all of them.
+                  }
+
+                  reply_json = final_json.json(); 
                   const uint32_t kReplyLength = reply_json.length();
                   std::strcpy(outReply, reply_json.c_str());
                   outActualReplySize = kReplyLength;

@@ -346,6 +346,7 @@ It returns all the parts of the "Leaf Only Tree" of which the node is not aware 
 
 #### Super Leafs
 `"{"Mode": "super_leafs", "SLID": "0"}"`
+
 It is used to query the IP address of monitor for the super leaf referenced by SLID.
 
 ```json
@@ -359,22 +360,27 @@ All the write requests return a global_quorum_certificate which is a proof that 
 
 #### Quorum Size
 `"{"Mode": "quorum_size", "BGID":"0", "size":"6", "quorum_cert": "cert" , "cycle":"3"}"`
+
 After successful verification* of the quorum_cert, it updates the quorum size and cycle for a byzantine group referenced by "BGID" while also storing the certificate.
 
 #### Public Keys
 `{"Mode": "public_keys", "BGID":"0", "keys": {"ip1:port1": "pk_1", "ip2:port2": "pk_2", "certificate_msp":"certificate"}}`
+
 After successful verification* of the certificate provided by msp, it updates the public keys for all the monitors emulating the byantine group referenced by BGID. 
 
 #### Byzantine Groups
 `{"Mode": "byzantine_groups", "BGID": "0", "IP": "ip1:port1"}`
+
 It is used to update the byzantine group leader which further should result in changes in the membership service. Currently, Concord only supports static network configuration, hence this is of less importance.
 
 #### Emulators
 `{"Mode": "emulators", "SLID": "0", "ip": ["ip1:port1","ip2:port2", "ip3:port3"], "cert": "cert"}`
+
 After successful verification* of the quorum_cert, It updates the list of emulators for a super leaf referenced by SLID.
 
 #### Super leafs
 `{"Mode": "super_leafs", "SLID": "0", "IP": "ip1:port1", "cert":"cert"}`
+
 After successful verification* of the quorum_cert, it updates the monitors ip address for a super leaf referenced by SLID.
 
 \* Currently the certificates are not being verified.

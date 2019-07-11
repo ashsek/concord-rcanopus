@@ -2810,6 +2810,9 @@ namespace bftEngine {
                 PartialProofsSet& pps = seqNumInfo.partialProofs();
                 FullCommitProofMsg* fcp;
 
+                //ashwin: trying to verify the fcp,
+                
+
                 LOG_INFO_F(GL, "\n---------------------------------\nReplica %d - executeRequestsInPrePrepareMsg()===> FullProof: %d ", (int) myReplicaId, pps.hasFullProof());
                 //                if (pps.hasFullProof()) {
                 Assert(pps.hasFullProof() == 1);
