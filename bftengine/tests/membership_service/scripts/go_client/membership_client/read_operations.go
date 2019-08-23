@@ -21,8 +21,8 @@ package main
 
 import (
 	"context"
-	"log"
 	"fmt"
+	"log"
 	"time"
 
 	"google.golang.org/grpc"
@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	address     = "localhost:50051"
+	address = "127.0.0.1:50051"
 )
 
 func main() {
@@ -47,16 +47,16 @@ func main() {
 	const read int32 = 1 // set 1 for ReadOnly else set 0 for update requests.
 
 	//Read only,
-    request_membership1 := [6]string{`{"Mode": "public_keys", "BGID": "0"}`,
-    								 `{"Mode": "quorum_size", "BGID": "0"}`,
-    								  `{"Mode": "byzantine_groups", "BGID": "0"}`,
-    								   `{"Mode": "emulators", "SLID": "0", "height":"2"}`,
-    								    `{"Mode": "emulators", "SLID": "4", "height":"1"}`,
-    								    `{"Mode": "super_leafs", "SLID": "0"}`}
+	request_membership1 := [6]string{`{"Mode": "public_keys", "BGID": "1"}`,
+		`{"Mode": "quorum_size", "BGID": "1"}`,
+		`{"Mode": "byzantine_groups", "BGID": "1"}`,
+		`{"Mode": "emulators", "SLID": "1-1", "height":"2"}`,
+		`{"Mode": "emulators", "SLID": "4-1", "height":"1"}`,
+		`{"Mode": "super_leafs", "SLID": "3-1"}`}
 
 	for i := 0; i < 6; i++ {
 		// sum += i
-	    fmt.Println("\n----- Request : ", request_membership1[i])
+		fmt.Println("\n----- Request : ", request_membership1[i])
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 		r, err := c.SayHello(ctx, &pb.RequestMembership{Name: request_membership1[i], ReadOnly: read})
@@ -66,5 +66,5 @@ func main() {
 		fmt.Println("\n", r.Message)
 	}
 	elapsed := time.Since(start)
-	fmt.Println("Time taken: ",elapsed)
+	fmt.Println("Time taken: ", elapsed)
 }

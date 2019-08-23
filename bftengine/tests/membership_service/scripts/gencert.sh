@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-toolsdir=/home/a2sekhar/concord-rcanopus/build/tools
+toolsdir=$HOME/Projects/concord-rcanopus/tools
 scriptdir=$(cd $(dirname $0); pwd -P)
 
 echo "Generating new keys..."

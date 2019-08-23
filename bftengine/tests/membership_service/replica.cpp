@@ -383,7 +383,7 @@ class SimpleAppState : public RequestsHandler {
                   bool diff_parents = 0;
 
                   while(!queue.empty()){
-                      
+                     cout << queue.front() << "Ashwin"; 
                       if(pare == topology.get<jsonxx::Object>(queue.front()).get<string>("parent")){ // separating parent wise
                         if(queue.front() != SLID){
                             sub_json << queue.front() << emulators.get<jsonxx::Object>(queue.front()); // making a json of BGID + their emulators for a v_node.
@@ -401,12 +401,13 @@ class SimpleAppState : public RequestsHandler {
 
                       queue.pop();
                   } 
-                  if(!diff_parents){
+                  //if(!diff_parents){
                         final_json << pare << sub_json; // if the nodes dont have different parents, include all of them.
-                  }
+                 // }
 
                   reply_json = final_json.json(); 
                   const uint32_t kReplyLength = reply_json.length();
+                  cout << "yolo" << reply_json;
                   std::strcpy(outReply, reply_json.c_str());
                   outActualReplySize = kReplyLength;
               }

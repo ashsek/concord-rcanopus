@@ -1,15 +1,113 @@
 {
-  "_id": "configuration",
-  "max_height": "2",
-  "v_n1": { "parent": "v_n3", "children": ["0","1","2","3"]},
-  "v_n2": { "parent": "v_n3", "children": ["4","5","6","7"]},
-  "v_n3": { "parent": "", "children": ["v_n2","v_n1"]},
-  "0": {"parent": "v_n1", "children":[]},
-  "1": {"parent": "v_n1", "children":[]},
-  "2": {"parent": "v_n1", "children":[]},
-  "3": {"parent": "v_n1", "children":[]},
-  "4": {"parent": "v_n2", "children":[]},
-  "5": {"parent": "v_n2", "children":[]},
-  "6": {"parent": "v_n2", "children":[]},
-  "7": {"parent": "v_n2", "children":[]}
+  "1": {
+    "children": [
+      "1-1", 
+      "1-3", 
+      "1-2", 
+      "1-4"
+    ], 
+    "parent": "5"
+  }, 
+  "3": {
+    "children": [
+      "3-1", 
+      "3-3", 
+      "3-2", 
+      "3-4"
+    ], 
+    "parent": "5"
+  }, 
+  "2": {
+    "children": [
+      "2-1", 
+      "2-3", 
+      "2-2", 
+      "2-4"
+    ], 
+    "parent": "5"
+  }, 
+  "5": {
+    "children": [
+      "1", 
+      "3", 
+      "2", 
+      "4"
+    ], 
+    "parent": ""
+  }, 
+  "4": {
+    "children": [
+      "4-1", 
+      "4-3", 
+      "4-2", 
+      "4-4"
+    ], 
+    "parent": "5"
+  }, 
+  "2-2": {
+    "children": [], 
+    "parent": "2"
+  }, 
+  "2-3": {
+    "children": [], 
+    "parent": "2"
+  }, 
+  "2-1": {
+    "children": [], 
+    "parent": "2"
+  }, 
+  "2-4": {
+    "children": [], 
+    "parent": "2"
+  }, 
+  "1-1": {
+    "children": [], 
+    "parent": "1"
+  }, 
+  "1-3": {
+    "children": [], 
+    "parent": "1"
+  }, 
+  "1-2": {
+    "children": [], 
+    "parent": "1"
+  }, 
+  "1-4": {
+    "children": [], 
+    "parent": "1"
+  }, 
+  "max_height": "2", 
+  "4-1": {
+    "children": [], 
+    "parent": "4"
+  }, 
+  "4-2": {
+    "children": [], 
+    "parent": "4"
+  }, 
+  "4-3": {
+    "children": [], 
+    "parent": "4"
+  }, 
+  "4-4": {
+    "children": [], 
+    "parent": "4"
+  }, 
+  "3-4": {
+    "children": [], 
+    "parent": "3"
+  }, 
+  "3-3": {
+    "children": [], 
+    "parent": "3"
+  }, 
+  "3-2": {
+    "children": [], 
+    "parent": "3"
+  }, 
+  "3-1": {
+    "children": [], 
+    "parent": "3"
+  }, 
+  "_id": "configuration"
 }

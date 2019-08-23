@@ -18,7 +18,7 @@ struct ClientParams {
   uint32_t numOfOperations = 1;
   uint16_t clientId = 4;
   uint16_t numOfReplicas = 4;
-  uint16_t numOfClients = 1;
+  uint16_t numOfClients = 48;
   uint16_t numOfFaulty = 1;
   uint16_t numOfSlow = 0;
   std::string   configFileName="sample_config.txt";
@@ -31,7 +31,7 @@ struct ClientParams {
 struct ReplicaParams {
   uint16_t replicaId;
   uint16_t numOfReplicas = 4;
-  uint16_t numOfClients = 1;
+  uint16_t numOfClients = 48;
   bool debug = false;
   bool viewChangeEnabled = false;
   uint32_t viewChangeTimeout = 60000; // ms

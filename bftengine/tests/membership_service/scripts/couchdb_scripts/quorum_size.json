@@ -1,5 +1,23 @@
 {
-  "_id": "quorum_size",
-  "0": {"size":"4", "cycle": "5" , "quorum_cert": "cert"},
-  "1": {"size":"3", "cycle": "4" , "quorum_cert": "cert"}
+  "1": {
+    "quorum_cert": "", 
+    "cycle": "0", 
+    "size": "3"
+  }, 
+  "2": {
+    "quorum_cert": "", 
+    "cycle": "0", 
+    "size": "3"
+  }, 
+  "3": {
+    "quorum_cert": "", 
+    "cycle": "0", 
+    "size": "3"
+  }, 
+  "_id": "quorum_size", 
+  "4": {
+    "quorum_cert": "", 
+    "cycle": "0", 
+    "size": "3"
+  }
 }

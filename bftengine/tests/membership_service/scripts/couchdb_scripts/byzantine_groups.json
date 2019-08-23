@@ -1,5 +1,19 @@
 {
-  "_id": "byzantine_groups",
-  "0": {"leader_ip": "10.0.1.4:3710", "cert":"globa_cert"},
-  "1": {"leader_ip": "10.0.1.5:3712", "cert":"globa_cert"}
+  "1": {
+    "leader_ip": "10.0.2.3:10013", 
+    "cert": ""
+  }, 
+  "2": {
+    "leader_ip": "10.0.2.7:20012", 
+    "cert": ""
+  }, 
+  "3": {
+    "leader_ip": "10.0.2.11:30013", 
+    "cert": ""
+  }, 
+  "_id": "byzantine_groups", 
+  "4": {
+    "leader_ip": "10.0.2.15:40012", 
+    "cert": ""
+  }
 }

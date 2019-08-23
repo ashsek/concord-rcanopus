@@ -80,6 +80,7 @@ concordlogger::Logger clientLogger =
 // #define test_assert(statement, message) \
 // { if (!(statement)) { \
 // LOG_FATAL(clientLogger, "assert fail with message: " << message); assert(false);}}
+std::string port_rcanopus;
 
 void parse_params(int argc, char** argv, ClientParams &cp,
     bftEngine::SimpleClientParams &scp) {
@@ -175,6 +176,8 @@ void parse_params(int argc, char** argv, ClientParams &cp,
         scp.clientPeriodicResetThresh = (uint16_t)prt;
       } else if (p == "-cf") {
         cp.configFileName = argv[i + 1];
+      } else if (p == "-rp") {
+        port_rcanopus = argv[i + 1];
       }
       else {
         printf("Unknown parameter %s\n", p.c_str());
@@ -284,6 +287,7 @@ class membership_service_impl final : public MemRequest::Service {
                               timeout,
                               kReplyBufferLength, rawReplyBuffer2, actualReplyLength);
 
+          cout << "!!!!!!!!!!!!!" <<actualReplyLength << rawReplyBuffer2;
           char* pReqId  = rawReplyBuffer2;
           
           // std::string request_string = parse_char_string(retVal, actualReplyLength);
@@ -409,7 +413,8 @@ class membership_service_impl final : public MemRequest::Service {
 int main(int argc, char **argv) {
   parse_params(argc, argv, cp, scp); // parameters for concord 
   // RunServer();
-  std::string server_address("0.0.0.0:50051"); // server for grpc
+  std::string server_addr = "0.0.0.0:" + port_rcanopus;
+  std::string server_address(server_addr); // server for grpc
   membership_service_impl service;
 
   ServerBuilder builder;
